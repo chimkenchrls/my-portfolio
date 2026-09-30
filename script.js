@@ -770,6 +770,124 @@
   })();
 
   /* ==========================================================================
+     10. Scroll reveal — fade + slide up once, staggered in lists
+     ========================================================================== */
+
+  const reveal = (() => {
+    const SINGLE = ['.stats', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
+    const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li'];
+    const STAGGER_MS = 60;
+    const STAGGER_CAP = 8;
+
+    const init = () => {
+      if (prefersReducedMotion() || !('IntersectionObserver' in window)) return;
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('reveal-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -10% 0px' });
+
+      const track = (node, delay = 0) => {
+        node.classList.add('reveal');
+        if (delay) node.style.setProperty('--stagger', `${delay}ms`);
+        observer.observe(node);
+      };
+
+      $$(SINGLE.join(',')).forEach((node) => track(node));
+      STAGGERED.forEach((selector) => {
+        $$(selector).forEach((node, i) => track(node, Math.min(i, STAGGER_CAP) * STAGGER_MS));
+      });
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
+     11. Pixel photo — 8×8 tiles dissolve profile.jpg into light.jpg
+     ========================================================================== */
+
+  const pixelPhoto = (() => {
+    const GRID = 8;
+    const STEP_MS = 6;
+    const IMAGE = './assets/light.jpg';
+    const IMAGE_W = 639;
+    const IMAGE_H = 780;
+
+    const init = () => {
+      const photo = $('.hero-photo');
+      if (!photo) return;
+      const delays = revealDelays(GRID * GRID, prefersReducedMotion() ? 0 : STEP_MS);
+      const fragment = document.createDocumentFragment();
+      computeTiles(GRID, IMAGE_W, IMAGE_H).forEach((tile, i) => {
+        const node = el('span', 'pixel-tile');
+        node.setAttribute('aria-hidden', 'true');
+        node.style.top = `${tile.top}%`;
+        node.style.left = `${tile.left}%`;
+        node.style.width = `${tile.size}%`;
+        node.style.height = `${tile.size}%`;
+        node.style.backgroundImage = `url("${IMAGE}")`;
+        node.style.backgroundSize = `${tile.bgSize[0]}% ${tile.bgSize[1]}%`;
+        node.style.backgroundPosition = `${tile.bgPos[0]}% ${tile.bgPos[1]}%`;
+        node.style.setProperty('--delay', `${delays[i]}ms`);
+        fragment.append(node);
+      });
+      photo.append(fragment);
+
+      // Touch devices have no hover: tap toggles the reveal.
+      const noHover = window.matchMedia('(hover: none)');
+      photo.addEventListener('click', () => {
+        if (noHover.matches) photo.classList.toggle('is-revealed');
+      });
+
+      const preload = () => { const img = new Image(); img.src = IMAGE; };
+      if (document.readyState === 'complete') preload();
+      else window.addEventListener('load', preload, { once: true });
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
+     12. Visitor counter — abacus.jasoncameron.dev, hidden on any failure
+     ========================================================================== */
+
+  const visitors = (() => {
+    const BASE = 'https://abacus.jasoncameron.dev';
+    const NAMESPACE = 'kenneth-valdez-portfolio';
+    const KEY = 'visits';
+    const TIMEOUT_MS = 3000;
+
+    const init = async () => {
+      const row = $('.visitors');
+      const out = $('.visitors-count');
+      if (!row || !out || typeof fetch !== 'function' || typeof AbortController !== 'function') return;
+
+      const counted = storage.get('sessionStorage', 'visit-counted') === 'true';
+      const url = `${BASE}/${counted ? 'get' : 'hit'}/${NAMESPACE}/${KEY}`;
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        const text = padCount(payload && payload.value);
+        if (text === null) throw new Error('No counter value');
+        out.textContent = text;
+        row.hidden = false;
+        if (!counted) storage.set('sessionStorage', 'visit-counted', 'true');
+      } catch {
+        row.hidden = true;
+      } finally {
+        window.clearTimeout(timer);
+      }
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
      99. Boot
      ========================================================================== */
 
@@ -782,7 +900,9 @@
     quickJump.init();
     keyboard.init();
     clipboard.init();
-    /* motion inits (Task 6) go here */
+    pixelPhoto.init();
+    reveal.init();
+    visitors.init();
     const year = $('.footer-year');
     if (year) year.textContent = String(new Date().getFullYear());
   };
