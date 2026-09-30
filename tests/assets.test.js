@@ -49,7 +49,7 @@ test('sidebar labels are in title case, not forced lowercase', () => {
   const navRule = css.slice(css.indexOf('.nav-link,\n.quick-jump-trigger {'), css.indexOf('.nav-link:hover'));
   assert.doesNotMatch(navRule, /text-transform:\s*lowercase/);
   const html = read('index.html');
-  for (const text of ['&gt; Aspiring DevOps · Cloud', 'Quick jump…', '>Kenneth Charles</a>']) {
+  for (const text of ['Play chimken', '>Kenneth Charles</a>']) {
     assert.ok(html.includes(text), `missing "${text}"`);
   }
 });
@@ -58,4 +58,16 @@ test('GitHub contributions panel sits inside the Stack section', () => {
   const html = read('index.html');
   const stack = html.slice(html.indexOf('id="stack"'), html.indexOf('id="projects"'));
   assert.match(stack, /class="github-panel"/);
+});
+
+test('quick jump is replaced by the chimken game', () => {
+  const html = read('index.html');
+  assert.doesNotMatch(html, /quick-jump/);
+  assert.match(html, /<dialog[^>]*class="game"/);
+  assert.match(html, /<canvas[^>]*class="game-canvas"/);
+  assert.match(html, /class="game-trigger"[\s\S]*?Play chimken/);
+  assert.match(html, /class="topbar-game"/, 'mobile top bar needs a game button');
+  assert.match(html, /class="game-close"/, 'touch users need a close button');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', 'chimken.svg')));
+  assert.doesNotMatch(read('style.css'), /quick-jump/);
 });

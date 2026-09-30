@@ -86,10 +86,9 @@
     if (key === 'Escape') return { type: 'close' };
     if (event.altKey && !event.ctrlKey && !event.metaKey
       && (event.code === 'KeyK' || key.toLowerCase() === 'k')) {
-      return { type: 'quick-jump' };
+      return { type: 'game' };
     }
     if (typing || event.altKey || event.ctrlKey || event.metaKey) return null;
-    if (key === '/') return { type: 'search' };
     if (key === 't' || key === 'T') return { type: 'theme' };
     const section = SECTIONS.find((s) => s.key === key);
     return section ? { type: 'jump', id: section.id } : null;
@@ -134,10 +133,96 @@
     return (cellSize * (0.3 + (clamped / 4) * 0.7)) / 2;
   };
 
-  const filterSections = (sections, query) => {
-    const q = String(query || '').trim().toLowerCase();
-    if (!q) return sections.slice();
-    return sections.filter((s) => s.label.toLowerCase().includes(q) || s.id.includes(q) || s.key === q);
+  /* chimken — a tiny endless runner (pure logic; drawing lives in the DOM section).
+     Units: px and seconds. `y` is chimken's height above the ground. */
+  const CHIMKEN = {
+    width: 600,
+    height: 150,
+    groundY: 128,
+    chimkenX: 36,
+    chimkenSize: 24,
+    gravity: 2400,
+    holdGravity: 0.55,
+    jumpVelocity: 700,
+    startSpeed: 300,
+    maxSpeed: 720,
+    acceleration: 7,
+    restartDelay: 0.5,
+    bugs: {
+      small: { w: 14, h: 12 },
+      large: { w: 18, h: 16 },
+      pair: { w: 32, h: 12 },
+    },
+  };
+
+  const createChimkenState = (hi = 0) => ({
+    status: 'ready',
+    speed: CHIMKEN.startSpeed,
+    distance: 0,
+    score: 0,
+    hi,
+    overFor: 0,
+    nextSpawnIn: CHIMKEN.width * 0.8,
+    chimken: { y: 0, vy: 0, onGround: true },
+    obstacles: [],
+  });
+
+  // Distance until the next bug: always long enough to land and jump again.
+  const spawnGap = (speed, random = Math.random) => speed * (0.8 + random() * 0.9);
+
+  const spawnBug = (random) => {
+    const r = random();
+    const kind = r < 0.5 ? 'small' : r < 0.8 ? 'large' : 'pair';
+    return { x: CHIMKEN.width, ...CHIMKEN.bugs[kind], kind };
+  };
+
+  const hitsBug = (chimken, bug) => {
+    const left = CHIMKEN.chimkenX + 4;
+    const right = left + CHIMKEN.chimkenSize - 8;
+    return left < bug.x + bug.w && right > bug.x && chimken.y < bug.h - 2;
+  };
+
+  const stepChimken = (state, dt, input, random = Math.random) => {
+    if (state.status === 'ready') {
+      if (!input.jump) return state;
+      return stepChimken({ ...state, status: 'running' }, dt, input, random);
+    }
+    if (state.status === 'over') {
+      const overFor = state.overFor + dt;
+      if (input.jump && overFor >= CHIMKEN.restartDelay) {
+        return stepChimken({ ...createChimkenState(state.hi), status: 'running' }, dt, input, random);
+      }
+      return { ...state, overFor };
+    }
+
+    const speed = Math.min(CHIMKEN.maxSpeed, state.speed + CHIMKEN.acceleration * dt);
+    let { y, vy, onGround } = state.chimken;
+    if (input.jump && onGround) { vy = CHIMKEN.jumpVelocity; onGround = false; }
+    if (!onGround) {
+      const gravity = input.holding && vy > 0 ? CHIMKEN.gravity * CHIMKEN.holdGravity : CHIMKEN.gravity;
+      vy -= gravity * dt;
+      y += vy * dt;
+      if (y <= 0) { y = 0; vy = 0; onGround = true; }
+    }
+    const chimken = { y, vy, onGround };
+
+    const moved = speed * dt;
+    const obstacles = state.obstacles
+      .map((bug) => ({ ...bug, x: bug.x - moved }))
+      .filter((bug) => bug.x + bug.w > 0);
+    let nextSpawnIn = state.nextSpawnIn - moved;
+    if (nextSpawnIn <= 0) {
+      obstacles.push(spawnBug(random));
+      nextSpawnIn = spawnGap(speed, random);
+    }
+
+    const distance = state.distance + moved;
+    const score = Math.floor(distance / 10);
+    const next = { ...state, speed, distance, score, chimken, obstacles, nextSpawnIn };
+    if (obstacles.some((bug) => hitsBug(chimken, bug))) {
+      return { ...next, status: 'over', overFor: 0, hi: Math.max(state.hi, score) };
+    }
+    return next;
   };
 
   const validateData = (data) => {
@@ -203,7 +288,8 @@
     module.exports = {
       SECTIONS, padCount, safeUrl, computeTiles, revealDelays, joinParts,
       parseContributions, buildContributionWeeks, dotRadius,
-      isTypingTarget, resolveShortcut, filterSections, validateData,
+      isTypingTarget, resolveShortcut, validateData,
+      CHIMKEN, createChimkenState, stepChimken, spawnGap,
     };
   }
   if (typeof document === 'undefined') return;
@@ -626,95 +712,177 @@
   })();
 
   /* ==========================================================================
-     7. Quick jump — Alt+K / "/" section switcher
+     7. chimken — Alt+K mini game drawn over the pure engine in section 1
      ========================================================================== */
 
-  const quickJump = (() => {
-    const dialog = $('.quick-jump');
-    const input = $('.quick-jump-input');
-    const list = $('.quick-jump-list');
-    const trigger = $('.quick-jump-trigger');
+  const game = (() => {
+    const dialog = $('.game');
+    const canvas = $('.game-canvas');
+    const scoreEl = $('.game-score');
+    const closeButton = $('.game-close');
+    const ctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+    const HI_KEY = 'chimken-hi';
+    const PIXEL = 2;
+    const SPRITES = {
+      runA: [
+        '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
+        'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
+        '.XXXXXXXXX..', '..XXXXXXX...', '...X...X....', '..XX..XX....',
+      ],
+      runB: [
+        '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
+        'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
+        '.XXXXXXXXX..', '..XXXXXXX...', '....X.X.....', '....XX.XX...',
+      ],
+      air: [
+        '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
+        'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
+        '.XXXXXXXXX..', '..XXXXXXX...', '...XX.XX....', '............',
+      ],
+      bugSmall: ['X.....X', '.X...X.', '..XXX..', '.XXXXX.', 'XXXXXXX', '.X.X.X.'],
+      bugLarge: [
+        'X.......X', '.X.....X.', '..XXXXX..', '.XX.X.XX.',
+        'XXXXXXXXX', 'XXX.X.XXX', '.XXXXXXX.', 'X.X.X.X.X',
+      ],
+    };
+    let state = createChimkenState();
+    let input = { jump: false, holding: false };
+    let raf = 0;
+    let last = 0;
+    let shownScore = '';
     let returnFocus = null;
 
-    const items = () => $$('.quick-jump-item', list);
+    const pad = (n) => String(n).padStart(5, '0');
+    const token = (name) => getComputedStyle(root).getPropertyValue(name).trim();
 
-    const renderList = () => {
-      const matches = filterSections(SECTIONS, input.value);
-      if (!matches.length) {
-        list.replaceChildren(el('li', 'quick-jump-empty', 'no matching section'));
-        return;
+    const fitCanvas = () => {
+      const ratio = window.devicePixelRatio || 1;
+      const w = Math.max(1, Math.round(canvas.clientWidth * ratio));
+      const h = Math.max(1, Math.round(canvas.clientHeight * ratio));
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      ctx.setTransform(w / CHIMKEN.width, 0, 0, h / CHIMKEN.height, 0, 0);
+    };
+
+    const drawSprite = (rows, x, bottom) => {
+      const top = bottom - rows.length * PIXEL;
+      rows.forEach((row, r) => {
+        for (let c = 0; c < row.length; c += 1) {
+          if (row[c] === 'X') ctx.fillRect(Math.round(x) + c * PIXEL, Math.round(top) + r * PIXEL, PIXEL, PIXEL);
+        }
+      });
+    };
+
+    const drawText = (text, y, font, fill) => {
+      ctx.font = font;
+      ctx.fillStyle = fill;
+      ctx.textAlign = 'center';
+      ctx.fillText(text, CHIMKEN.width / 2, y);
+    };
+
+    const draw = () => {
+      fitCanvas();
+      const fg = token('--fg');
+      const muted = token('--fg-muted');
+      const ground = CHIMKEN.groundY;
+      ctx.clearRect(0, 0, CHIMKEN.width, CHIMKEN.height);
+
+      ctx.fillStyle = muted;
+      ctx.fillRect(0, ground, CHIMKEN.width, 1);
+      const offset = state.distance % 12;
+      for (let x = -offset; x < CHIMKEN.width; x += 12) ctx.fillRect(x, ground + 5, 2, 1);
+
+      ctx.fillStyle = fg;
+      state.obstacles.forEach((bug) => {
+        if (bug.kind === 'pair') {
+          drawSprite(SPRITES.bugSmall, bug.x, ground);
+          drawSprite(SPRITES.bugSmall, bug.x + 18, ground);
+        } else {
+          drawSprite(bug.kind === 'large' ? SPRITES.bugLarge : SPRITES.bugSmall, bug.x, ground);
+        }
+      });
+
+      const { chimken } = state;
+      let sprite = SPRITES.runA;
+      if (!chimken.onGround) sprite = SPRITES.air;
+      else if (state.status === 'running' && Math.floor(state.distance / 30) % 2) sprite = SPRITES.runB;
+      drawSprite(sprite, CHIMKEN.chimkenX, ground - chimken.y);
+
+      const mono = '12px "Geist Mono", ui-monospace, monospace';
+      if (state.status === 'ready') drawText('press space or tap to start', 64, mono, muted);
+      if (state.status === 'over') {
+        drawText('GAME OVER', 58, '18px "Geist Pixel", "Geist Mono", monospace', fg);
+        drawText('space / tap to retry', 80, mono, muted);
       }
-      list.replaceChildren(...matches.map((section) => {
-        const li = el('li');
-        const button = el('button', 'quick-jump-item');
-        button.type = 'button';
-        button.dataset.target = section.id;
-        button.append(
-          el('span', 'quick-jump-index', `0${section.key}`),
-          el('span', null, section.label),
-          el('kbd', 'kbd', section.key),
-        );
-        li.append(button);
-        return li;
-      }));
+
+      const score = `${pad(state.score)}  HI ${pad(state.hi)}`;
+      if (score !== shownScore) { scoreEl.textContent = score; shownScore = score; }
+    };
+
+    const frame = (now) => {
+      const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
+      last = now;
+      const wasOver = state.status === 'over';
+      state = stepChimken(state, dt, input);
+      input.jump = false;
+      if (!wasOver && state.status === 'over') {
+        storage.set('localStorage', HI_KEY, String(state.hi));
+        announce(`Game over. Score ${state.score}. High score ${state.hi}.`);
+      }
+      draw();
+      raf = window.requestAnimationFrame(frame);
+    };
+
+    const stop = () => {
+      window.cancelAnimationFrame(raf);
+      raf = 0;
+      last = 0;
+      input = { jump: false, holding: false };
     };
 
     const isOpen = () => Boolean(dialog && dialog.open);
 
     const open = () => {
-      if (!dialog || typeof dialog.showModal !== 'function') return;
-      if (isOpen()) { input.focus(); return; }
+      if (!dialog || !ctx || typeof dialog.showModal !== 'function' || isOpen()) return;
       returnFocus = document.activeElement;
       layout.closeDrawer({ restoreFocus: false });
-      input.value = '';
-      renderList();
+      const saved = Math.floor(Number(storage.get('localStorage', HI_KEY)));
+      state = createChimkenState(Number.isFinite(saved) && saved > 0 ? saved : 0);
+      shownScore = '';
       dialog.showModal();
-      input.focus();
+      canvas.focus();
+      stop();
+      raf = window.requestAnimationFrame(frame);
     };
 
     const close = () => { if (isOpen()) dialog.close(); };
 
-    const go = (id) => {
-      close();
-      nav.jumpTo(id);
-    };
+    const press = () => { input.jump = true; input.holding = true; };
+    const release = () => { input.holding = false; };
+    const isJumpKey = (event) => event.key === ' ' || event.key === 'ArrowUp' || event.code === 'Space';
 
     const init = () => {
-      if (!dialog || typeof dialog.showModal !== 'function') {
-        if (trigger) trigger.hidden = true;
+      const triggers = $$('.game-trigger, .topbar-game');
+      if (!dialog || !ctx || typeof dialog.showModal !== 'function') {
+        triggers.forEach((button) => { button.hidden = true; });
         return;
       }
-      if (trigger) trigger.addEventListener('click', open);
-      input.addEventListener('input', renderList);
-      input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          const first = items()[0];
-          if (first) go(first.dataset.target);
-        } else if (event.key === 'ArrowDown') {
-          event.preventDefault();
-          const first = items()[0];
-          if (first) first.focus();
-        }
-      });
-      list.addEventListener('click', (event) => {
-        const button = event.target.closest('.quick-jump-item');
-        if (button) go(button.dataset.target);
-      });
-      list.addEventListener('keydown', (event) => {
-        const all = items();
-        const index = all.indexOf(document.activeElement);
-        if (index === -1) return;
-        if (event.key === 'ArrowDown') {
-          event.preventDefault();
-          all[Math.min(index + 1, all.length - 1)].focus();
-        } else if (event.key === 'ArrowUp') {
-          event.preventDefault();
-          (index === 0 ? input : all[index - 1]).focus();
-        }
-      });
+      triggers.forEach((button) => button.addEventListener('click', open));
+      closeButton.addEventListener('click', close);
       dialog.addEventListener('click', (event) => { if (event.target === dialog) close(); });
+      dialog.addEventListener('keydown', (event) => {
+        if (!isJumpKey(event) || event.target === closeButton) return;
+        event.preventDefault();
+        if (!event.repeat) press();
+      });
+      dialog.addEventListener('keyup', (event) => { if (isJumpKey(event)) release(); });
+      canvas.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        canvas.focus();
+        press();
+      });
+      ['pointerup', 'pointercancel'].forEach((type) => dialog.addEventListener(type, release));
       dialog.addEventListener('close', () => {
+        stop();
         if (returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length) {
           returnFocus.focus({ preventScroll: true });
         }
@@ -737,20 +905,19 @@
         if (!action) return;
         switch (action.type) {
           case 'close':
-            quickJump.close();
+            game.close();
             layout.closeDrawer();
             break;
-          case 'quick-jump':
-          case 'search':
+          case 'game':
             event.preventDefault();
-            quickJump.open();
+            game.open();
             break;
           case 'theme':
             theme.toggle();
             break;
           case 'jump':
             event.preventDefault();
-            quickJump.close();
+            game.close();
             nav.jumpTo(action.id);
             break;
           default:
@@ -1051,7 +1218,7 @@
     theme.init();
     layout.init();
     nav.init();
-    quickJump.init();
+    game.init();
     keyboard.init();
     clipboard.init();
     pixelPhoto.init();

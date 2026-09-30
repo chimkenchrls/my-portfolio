@@ -48,6 +48,14 @@
     <header class="topbar">
       <a class="topbar-brand" href="#home">Kenneth Charles</a>
       <button
+        class="topbar-game"
+        type="button"
+        aria-haspopup="dialog"
+        aria-label="Play chimken"
+      >
+        <span class="icon icon-chimken" aria-hidden="true"></span>
+      </button>
+      <button
         class="menu-toggle"
         type="button"
         aria-controls="sidebar"
@@ -65,7 +73,6 @@
       <a class="brand" href="#home">
         <span class="brand-mark" aria-hidden="true">KC</span>
         <span class="brand-name">Kenneth Charles Valdez</span>
-        <span class="brand-sub">&gt; Aspiring DevOps · Cloud</span>
       </a>
 
       <nav class="nav" aria-label="Sections">
@@ -112,13 +119,13 @@
           </li>
         </ul>
         <button
-          class="quick-jump-trigger"
+          class="game-trigger"
           type="button"
           aria-haspopup="dialog"
-          title="Quick jump (Alt + K)"
+          title="Play chimken (Alt + K)"
         >
-          <span class="icon icon-search" aria-hidden="true"></span
-          ><span class="nav-text">Quick jump…</span
+          <span class="icon icon-chimken" aria-hidden="true"></span
+          ><span class="nav-text">Play chimken</span
           ><kbd class="kbd">Alt + K</kbd>
         </button>
       </nav>
@@ -316,21 +323,21 @@
       </footer>
     </main>
 
-    <dialog class="quick-jump" aria-labelledby="quick-jump-title">
-      <p class="quick-jump-title" id="quick-jump-title">quick jump</p>
-      <label class="visually-hidden" for="quick-jump-input"
-        >Filter sections</label
-      >
-      <input
-        class="quick-jump-input"
-        id="quick-jump-input"
-        type="text"
-        autocomplete="off"
-        spellcheck="false"
-        placeholder="type a section…"
-      />
-      <ul class="quick-jump-list"></ul>
-      <p class="quick-jump-hint">↑↓ navigate · enter jump · esc close</p>
+    <dialog class="game" aria-labelledby="game-title">
+      <div class="game-head">
+        <p class="game-title" id="game-title">chimken</p>
+        <p class="game-score" aria-hidden="true">00000 HI 00000</p>
+        <button class="game-close" type="button" aria-label="Close game">×</button>
+      </div>
+      <canvas
+        class="game-canvas"
+        width="600"
+        height="150"
+        tabindex="0"
+        role="img"
+        aria-label="chimken: a running chicken jumping over bugs. Press space, up arrow, or tap to jump."
+      ></canvas>
+      <p class="game-hint">space / ↑ / tap to jump · esc to close</p>
     </dialog>
 
     <div class="toast" hidden>

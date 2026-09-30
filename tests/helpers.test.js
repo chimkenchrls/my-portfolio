@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   SECTIONS, padCount, safeUrl, computeTiles, revealDelays,
-  isTypingTarget, resolveShortcut, filterSections, validateData,
+  isTypingTarget, resolveShortcut, validateData,
 } = require('../script.js');
 
 const close = (actual, expected, eps = 1e-6) =>
@@ -88,16 +88,16 @@ test('resolveShortcut maps plain keys', () => {
   assert.deepEqual(resolveShortcut(k('5')), { type: 'jump', id: 'certifications' });
   assert.deepEqual(resolveShortcut(k('t')), { type: 'theme' });
   assert.deepEqual(resolveShortcut(k('T')), { type: 'theme' });
-  assert.deepEqual(resolveShortcut(k('/')), { type: 'search' });
+  assert.equal(resolveShortcut(k('/')), null);
   assert.deepEqual(resolveShortcut(k('Escape')), { type: 'close' });
   assert.equal(resolveShortcut(k('6')), null);
   assert.equal(resolveShortcut(k('x')), null);
 });
 
 test('resolveShortcut handles Alt+K on every layout, including macOS', () => {
-  assert.deepEqual(resolveShortcut({ key: 'k', code: 'KeyK', altKey: true }), { type: 'quick-jump' });
-  assert.deepEqual(resolveShortcut({ key: '˚', code: 'KeyK', altKey: true }), { type: 'quick-jump' });
-  assert.deepEqual(resolveShortcut({ key: 'k', code: 'KeyK', altKey: true }, true), { type: 'quick-jump' });
+  assert.deepEqual(resolveShortcut({ key: 'k', code: 'KeyK', altKey: true }), { type: 'game' });
+  assert.deepEqual(resolveShortcut({ key: '˚', code: 'KeyK', altKey: true }), { type: 'game' });
+  assert.deepEqual(resolveShortcut({ key: 'k', code: 'KeyK', altKey: true }, true), { type: 'game' });
 });
 
 test('resolveShortcut ignores keys while typing or with modifiers', () => {
@@ -109,14 +109,6 @@ test('resolveShortcut ignores keys while typing or with modifiers', () => {
   assert.equal(resolveShortcut({ key: 't', altKey: true }), null);
   assert.equal(resolveShortcut({ key: 'k', code: 'KeyK', altKey: true, ctrlKey: true }), null);
   assert.deepEqual(resolveShortcut({ key: 'Escape' }, true), { type: 'close' });
-});
-
-test('filterSections matches label, id, or key', () => {
-  assert.equal(filterSections(SECTIONS, '').length, 5);
-  assert.equal(filterSections(SECTIONS, '   ').length, 5);
-  assert.deepEqual(filterSections(SECTIONS, 'PRO').map((s) => s.id), ['projects']);
-  assert.deepEqual(filterSections(SECTIONS, '3').map((s) => s.id), ['stack']);
-  assert.deepEqual(filterSections(SECTIONS, 'zzz'), []);
 });
 
 test('validateData flags the mistakes a later edit is likely to make', () => {

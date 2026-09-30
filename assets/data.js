@@ -143,7 +143,7 @@ const PORTFOLIO_DATA = {
       meta: "2026",
       status: "done",
       description:
-        "AmIgo is a Discord AI bot that acts like a chaotic, laid-back group chat friend — chatting in casual Taglish when mentioned, replied to, or called by name. Powered by Google's Gemini API with per-channel conversation memory, and rounding that out with a photo-roasting command, an English tutor mode, and a persistent-facts system so it can remember and recall things about the server over time.",
+        "AmIgo is a Discord AI bot that acts like a chaotic, performative group chat friend chatting in casual Taglish when mentioned, replied to, or called by name. Powered by Google's Gemini API with per-channel conversation memory, with an English tutor mode, and a persistent-facts system so it can remember and recall things about the server over time.",
       tags: ["Discord.js", "TypeScript", "SQLite3", "Google Gemini API"],
       links: { source: null, live: null },
     },
