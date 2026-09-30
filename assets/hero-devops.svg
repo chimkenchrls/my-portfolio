@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%" fill="none">
+  <defs>
+    <linearGradient id="hero-grad-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="wire-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="50%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background frame / Terminal mockup -->
+  <rect x="20" y="20" width="560" height="360" rx="16" fill="url(#hero-grad-bg)" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Terminal Header Bar -->
+  <path d="M20 36 C20 27, 27 20, 36 20 L564 20 C573 20, 580 27, 580 36 L580 60 L20 60 Z" fill="#0B132B"/>
+  <circle cx="45" cy="40" r="5" fill="#EF4444"/>
+  <circle cx="65" cy="40" r="5" fill="#F59E0B"/>
+  <circle cx="85" cy="40" r="5" fill="#10B981"/>
+  <text x="300" y="44" fill="#94A3B8" font-family="'JetBrains Mono', monospace" font-size="12" text-anchor="middle">valdez-devops-cluster // production-pipeline</text>
+
+  <!-- Pipeline Pipeline Stages Track -->
+  <g transform="translate(45, 90)">
+    <!-- Connecting flow line -->
+    <path d="M40 35 L470 35" stroke="url(#wire-grad)" stroke-width="3" stroke-dasharray="6 4"/>
+    
+    <!-- Stage 1: Code / Commit -->
+    <g transform="translate(10, 0)">
+      <rect width="70" height="70" rx="12" fill="#1E293B" stroke="#3B82F6" stroke-width="2"/>
+      <circle cx="35" cy="28" r="12" fill="#3B82F6" fill-opacity="0.2"/>
+      <path d="M28 28 h14 M35 21 v14" stroke="#3B82F6" stroke-width="2"/>
+      <text x="35" y="58" fill="#F8FAFC" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Git Push</text>
+    </g>
+
+    <!-- Stage 2: CI Test & Lint -->
+    <g transform="translate(115, 0)">
+      <rect width="70" height="70" rx="12" fill="#1E293B" stroke="#10B981" stroke-width="2"/>
+      <circle cx="35" cy="28" r="12" fill="#10B981" fill-opacity="0.2"/>
+      <path d="M28 28 l5 5 l10 -10" stroke="#10B981" stroke-width="2.5" fill="none"/>
+      <text x="35" y="58" fill="#F8FAFC" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">CI Test</text>
+    </g>
+
+    <!-- Stage 3: Container Build -->
+    <g transform="translate(220, 0)">
+      <rect width="70" height="70" rx="12" fill="#1E293B" stroke="#06B6D4" stroke-width="2"/>
+      <rect x="25" y="18" width="20" height="20" rx="3" fill="#06B6D4" fill-opacity="0.2" stroke="#06B6D4" stroke-width="1.5"/>
+      <text x="35" y="58" fill="#F8FAFC" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">Docker</text>
+    </g>
+
+    <!-- Stage 4: IaC Terraform -->
+    <g transform="translate(325, 0)">
+      <rect width="70" height="70" rx="12" fill="#1E293B" stroke="#8B5CF6" stroke-width="2"/>
+      <path d="M25 20 L35 15 L45 20 L45 35 L35 40 L25 35 Z" fill="#8B5CF6" fill-opacity="0.2" stroke="#8B5CF6" stroke-width="1.5"/>
+      <text x="35" y="58" fill="#F8FAFC" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">IaC Apply</text>
+    </g>
+
+    <!-- Stage 5: Kubernetes Live -->
+    <g transform="translate(430, 0)">
+      <rect width="70" height="70" rx="12" fill="#1E293B" stroke="#10B981" stroke-width="2"/>
+      <circle cx="35" cy="28" r="12" fill="#10B981"/>
+      <path d="M29 28 l4 4 l8 -8" stroke="#0F172A" stroke-width="2" fill="none"/>
+      <text x="35" y="58" fill="#10B981" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="bold" text-anchor="middle">K8s Live</text>
+    </g>
+  </g>
+
+  <!-- Terminal Live Feed Box -->
+  <g transform="translate(45, 185)">
+    <rect width="510" height="170" rx="10" fill="#0A0F1D" stroke="#1E293B" stroke-width="1.5"/>
+    <text x="20" y="30" fill="#3B82F6" font-family="'JetBrains Mono', monospace" font-size="12">$ terraform plan -out=tfplan.binary</text>
+    <text x="20" y="50" fill="#94A3B8" font-family="'JetBrains Mono', monospace" font-size="11">Plan: 6 to add, 0 to change, 0 to destroy. Remote S3 backend locked.</text>
+    <text x="20" y="75" fill="#3B82F6" font-family="'JetBrains Mono', monospace" font-size="12">$ kubectl get pods -n production -l app=microservices</text>
+    <text x="20" y="95" fill="#10B981" font-family="'JetBrains Mono', monospace" font-size="11">NAME                           READY   STATUS    RESTARTS   AGE</text>
+    <text x="20" y="115" fill="#E2E8F0" font-family="'JetBrains Mono', monospace" font-size="11">auth-service-78bfd8b85b-2xj4k  1/1     Running   0          42m</text>
+    <text x="20" y="135" fill="#E2E8F0" font-family="'JetBrains Mono', monospace" font-size="11">api-gateway-69f8c679b9-w8pl7   1/1     Running   0          42m</text>
+    <text x="20" y="155" fill="#10B981" font-family="'JetBrains Mono', monospace" font-size="11">✓ GitOps sync completed via ArgoCD (revision: 8f921a4 - Status: Synced)</text>
+  </g>
+</svg>

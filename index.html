@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kenneth Charles Valdez - Personal Portfolio. Junior DevOps &amp; Cloud Infrastructure Engineer showcasing cloud automation, CI/CD pipelines, and containerized deployments.">
+  <meta name="keywords" content="Kenneth Charles Valdez, DevOps, Cloud Infrastructure, CI/CD, Kubernetes, Docker, Terraform, Portfolio">
+  <meta name="author" content="Kenneth Charles Valdez">
+  <title>Kenneth Charles Valdez // Junior DevOps &amp; Cloud Infrastructure</title>
+
+  <!-- Monospace & Sans-Serif Typography via Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+
+  <!-- Relative Stylesheet Link -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="dotted-grid-bg">
+
+
+  <!-- Accessible Skip to Main Content Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Fixed Two-Column Layout Wrapper -->
+  <div class="layout-wrapper">
+
+    <!-- ======================================================================
+         LEFT COLUMN: Static Sidebar Navigation (Landmark: <header>)
+         ====================================================================== -->
+    <header class="sidebar" id="sidebar" aria-label="Site Sidebar and Navigation">
+      <div class="sidebar-inner">
+
+        <!-- Top: Minimalist Text-Based Brand & Role -->
+        <div class="sidebar-top">
+          <div class="brand-group">
+            <a href="#home" class="brand-title" aria-label="Kenneth Charles Valdez - Return to Home">
+              Kenneth Charles Valdez
+            </a>
+            <div class="brand-meta" aria-label="Professional focus">
+              <span class="meta-prompt">&gt;</span> Aspiring Devops Engineer
+            </div>
+          </div>
+
+          <!-- Mobile Hamburger Toggle Button -->
+          <button type="button" class="mobile-nav-toggle" id="mobile-nav-toggle" aria-controls="sidebar-nav" aria-expanded="false" aria-label="Toggle navigation menu">
+            <span class="hamburger-line" aria-hidden="true"></span>
+            <span class="hamburger-line" aria-hidden="true"></span>
+            <span class="hamburger-line" aria-hidden="true"></span>
+            <span class="visually-hidden">Menu</span>
+          </button>
+        </div>
+
+        <!-- Middle: Categorized Vertical Navigation Landmark (<nav>) -->
+        <nav class="sidebar-nav" id="sidebar-nav" aria-label="Primary Navigation">
+          <ul class="nav-menu">
+            <li class="nav-item">
+              <a href="#home" class="nav-link active" data-nav="home">
+                <span class="nav-icon" aria-hidden="true">
+                  <img src="./assets/icons/home.svg" alt="" width="16" height="16">
+                </span>
+                <span class="nav-label">Home</span>
+                <kbd class="kbd-tag" aria-label="Shortcut: Key 1">1</kbd>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#about" class="nav-link" data-nav="about">
+                <span class="nav-icon" aria-hidden="true">
+                  <img src="./assets/icons/about.svg" alt="" width="16" height="16">
+                </span>
+                <span class="nav-label">About</span>
+                <kbd class="kbd-tag" aria-label="Shortcut: Key 2">2</kbd>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#projects" class="nav-link" data-nav="projects">
+                <span class="nav-icon" aria-hidden="true">
+                  <img src="./assets/icons/projects.svg" alt="" width="16" height="16">
+                </span>
+                <span class="nav-label">Projects</span>
+                <kbd class="kbd-tag" aria-label="Shortcut: Key 3">3</kbd>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#certifications" class="nav-link" data-nav="certifications">
+                <span class="nav-icon" aria-hidden="true">
+                  <img src="./assets/icons/certifications.svg" alt="" width="16" height="16">
+                </span>
+                <span class="nav-label">Certifications</span>
+                <kbd class="kbd-tag" aria-label="Shortcut: Key 4">4</kbd>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#contact" class="nav-link" data-nav="contact">
+                <span class="nav-icon" aria-hidden="true">
+                  <img src="./assets/icons/contact.svg" alt="" width="16" height="16">
+                </span>
+                <span class="nav-label">Contacts</span>
+                <kbd class="kbd-tag" aria-label="Shortcut: Key 5">5</kbd>
+              </a>
+            </li>
+          </ul>
+
+          <!-- Interactive Search / Quick Jump Action Widget -->
+          <div class="sidebar-search-box">
+            <button type="button" class="search-trigger-btn" id="search-trigger-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Open Quick Navigation Palette">
+              <span class="search-trigger-left">
+                <img src="./assets/icons/search.svg" alt="" width="14" height="14" aria-hidden="true">
+                <span class="search-trigger-text">quick jump...</span>
+              </span>
+              <kbd class="kbd-hint">Alt + K</kbd>
+            </button>
+          </div>
+        </nav>
+
+        <!-- Bottom: System Toggles, Metrics, and Direct Contact Landmark -->
+        <aside class="sidebar-bottom" aria-label="System status and direct contact">
+          
+          <!-- System Status Indicator & Copyable Email -->
+          <div class="status-and-contact">
+            <div class="status-indicator-row" role="status" aria-label="Current professional status">
+              <span class="status-bullet" aria-hidden="true"></span>
+              <span class="status-text">status: available for hire</span>
+            </div>
+
+            <!-- Plaintext Copyable Email -->
+            <div class="email-copy-wrapper">
+              <a href="mailto:charleskenneth129@gmail.com" class="plaintext-email" id="email-link" aria-label="Send email to kenneth.valdez.devops@gmail.com">
+                charleskenneth129@gmail.com
+              </a>
+              <button type="button" class="copy-email-btn" id="copy-email-btn" aria-label="Copy email address to clipboard" title="Copy email">
+                <img src="./assets/icons/copy.svg" alt="" width="14" height="14" aria-hidden="true">
+              </button>
+            </div>
+            <div id="copy-feedback" class="copy-feedback" role="status" aria-live="polite"></div>
+          </div>
+
+          <!-- Visitor Count Metric & Theme Switcher -->
+          <div class="system-meta-row">
+            <div class="visitor-counter" aria-label="Visitor metric count">
+              <span class="meta-label">VISITOR:</span>
+              <span class="meta-value" id="visitor-count">1</span>
+            </div>
+
+            <!-- Light / Dark Theme Switcher Button -->
+            <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle between light and dark mode" aria-pressed="false">
+              <span class="theme-mode-text" id="theme-mode-label">[MODE: LIGHT]</span>
+            </button>
+          </div>
+
+        </aside>
+
+        <!-- Desktop Sidebar Collapse Toggle Button -->
+        <button type="button" class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
+          <span class="collapse-icon" id="collapse-icon" aria-hidden="true">[&lt;&lt;]</span>
+        </button>
+
+      </div>
+    </header>
+
+
+    <!-- ======================================================================
+         RIGHT COLUMN: Scrollable Main Content Area (Landmark: <main>)
+         ====================================================================== -->
+    <main class="main-content" id="main-content" tabindex="-1">
+
+      <!-- --------------------------------------------------------------------
+           1. HERO SECTION
+           -------------------------------------------------------------------- -->
+      <section id="home" class="content-section hero-section" aria-labelledby="hero-name-heading">
+        <div class="section-container">
+          <div class="hero-layout">
+
+            <!-- Portrait Column (Beside Name & Description) -->
+            <div class="hero-portrait-col">
+              <figure class="portrait-figure">
+                <div class="portrait-wrapper">
+                  <img src="./assets/profile.png" alt="Portrait of Kenneth Charles Valdez" class="portrait-image" width="170" height="170">
+                </div>
+                <figcaption class="visually-hidden">Kenneth Charles Valdez, Junior DevOps Engineer</figcaption>
+              </figure>
+            </div>
+
+            <!-- Content Column: Name, Description, and Social Links -->
+            <div class="hero-content-col">
+              <p class="hero-eyebrow">
+                <span class="hero-eyebrow-dot" aria-hidden="true"></span>
+                Aspiring DevOps Engineer
+              </p>
+
+              <h1 id="hero-name-heading" class="hero-name">
+                Kenneth Charles Valdez
+              </h1>
+
+              <p class="hero-bio">
+                Junior DevOps &amp; Cloud Infrastructure Engineer bridging the gap between software development and production operations. Passionate about automated CI/CD pipelines, container orchestration with Docker &amp; Kubernetes, and provisioning immutable cloud infrastructure using Terraform.
+              </p>
+
+              <div class="hero-social-links" aria-label="Social and professional links">
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="plain-slash-link">github</a>
+                <span class="slash-separator" aria-hidden="true">/</span>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="plain-slash-link">linkedin</a>
+                <span class="slash-separator" aria-hidden="true">/</span>
+                <a href="mailto:charleskenneth129@gmail.com" class="plain-slash-link">email</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------------------
+           2. ABOUT SECTION
+           -------------------------------------------------------------------- -->
+      <section id="about" class="content-section about-section" aria-labelledby="about-heading">
+        <div class="section-container">
+          <div class="section-title-bar">
+            <h2 id="about-heading" class="section-title">
+              <span class="title-index">01 //</span> About
+            </h2>
+            <span class="section-tag-line">engineering reliability &amp; automation</span>
+          </div>
+
+          <div class="about-body-text">
+            <p>
+              I specialize in transforming repetitive deployment tasks into predictable, automated workflows. My work is driven by three foundational tenets: version everything as code, isolate and containerize all workloads, and enforce continuous testing prior to any release.
+            </p>
+            <p>
+              Whether configuring AWS VPC networks with Terraform, writing declarative Kubernetes manifests, or constructing GitHub Actions delivery pipelines with automated vulnerability scans, my goal is to give engineering teams fast, zero-downtime, and reproducible releases.
+            </p>
+          </div>
+
+          <!-- Terminal Toolchain Strip -->
+          <div class="toolchain-box">
+            <div class="toolchain-header">
+              <span class="toolchain-prompt"></span> Tech Stack
+            </div>
+            <ul class="toolchain-list" aria-label="Core technical stack">
+              <li>AWS Cloud</li>
+              <li>Docker</li>
+              <li>Kubernetes</li>
+              <li>Terraform</li>
+              <li>GitHub Actions</li>
+              <li>Linux / Bash</li>
+              <li>Prometheus</li>
+              <li>Grafana</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------------------
+           3. CORE CONTENT: PROJECTS SECTION & 3 STATS GRID
+           -------------------------------------------------------------------- -->
+      <section id="projects" class="content-section projects-section" aria-labelledby="projects-heading">
+        <div class="section-container">
+          
+          <div class="section-title-bar">
+            <h2 id="projects-heading" class="section-title">
+              <span class="title-index">02 //</span> Projects
+            </h2>
+            <span class="section-tag-line">infrastructure &amp; delivery systems</span>
+          </div>
+
+          <!-- 3 Stats & Highlights Grid (Separated by Thin 1px Borders) -->
+          <div class="stats-grid" role="region" aria-label="Project operational metrics">
+            <div class="stat-cell">
+              <span class="stat-number">08+</span>
+              <span class="stat-meta">Production Builds</span>
+              <span class="stat-subtext">automated via CI/CD pipelines</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-number">99.9%</span>
+              <span class="stat-meta">Target Uptime</span>
+              <span class="stat-subtext">multi-AZ &amp; health probe checks</span>
+            </div>
+            <div class="stat-cell">
+              <span class="stat-number">100%</span>
+              <span class="stat-meta">Infrastructure as Code</span>
+              <span class="stat-subtext">modular Terraform state definitions</span>
+            </div>
+          </div>
+
+          <!-- Clean List-Based Project Rows (Left Title, Right Monospace Date) -->
+          <div class="project-list-container">
+            <div class="list-table-header">
+              <span class="col-title">Project Identifier / Overview</span>
+              <span class="col-date">Date // Year</span>
+            </div>
+
+            <ol class="project-list-rows" aria-label="List of projects">
+              <!-- Project Row 1 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">Project Alpha // GitOps Delivery Pipeline [Placeholder]</h3>
+                      <p class="item-description">Automated container build, Trivy security scanning, and GitOps sync to Kubernetes cluster.</p>
+                      <div class="item-tags">
+                        <span class="mini-tag">GitHub Actions</span>
+                        <span class="mini-tag">Kubernetes</span>
+                        <span class="mini-tag">Docker</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <time datetime="2026" class="item-date">2026</time>
+                  </div>
+                </article>
+              </li>
+
+              <!-- Project Row 2 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">Project Beta // Multi-Region Terraform Cloud [Placeholder]</h3>
+                      <p class="item-description">Modular AWS VPC, Auto-Scaling Groups, ALB, and secure RDS PostgreSQL with S3 state locking.</p>
+                      <div class="item-tags">
+                        <span class="mini-tag">Terraform</span>
+                        <span class="mini-tag">AWS VPC</span>
+                        <span class="mini-tag">DynamoDB</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <time datetime="2025" class="item-date">2025</time>
+                  </div>
+                </article>
+              </li>
+
+              <!-- Project Row 3 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">Project Gamma // Microservices Observability Stack [Placeholder]</h3>
+                      <p class="item-description">Prometheus time-series metrics, Grafana dashboards, and Alertmanager routing for p99 latency.</p>
+                      <div class="item-tags">
+                        <span class="mini-tag">Prometheus</span>
+                        <span class="mini-tag">Grafana</span>
+                        <span class="mini-tag">Alertmanager</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <time datetime="2025" class="item-date">2025</time>
+                  </div>
+                </article>
+              </li>
+
+              <!-- Project Row 4 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">Project Delta // Zero-Downtime Blue/Green Cluster [Placeholder]</h3>
+                      <p class="item-description">NGINX reverse proxy automated cutover bash scripting with readiness checks and instant rollback.</p>
+                      <div class="item-tags">
+                        <span class="mini-tag">NGINX</span>
+                        <span class="mini-tag">Docker Compose</span>
+                        <span class="mini-tag">Bash</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <time datetime="2024" class="item-date">2024</time>
+                  </div>
+                </article>
+              </li>
+            </ol>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------------------
+           4. CERTIFICATIONS SECTION
+           -------------------------------------------------------------------- -->
+      <section id="certifications" class="content-section certifications-section" aria-labelledby="certifications-heading">
+        <div class="section-container">
+          <div class="section-title-bar">
+            <h2 id="certifications-heading" class="section-title">
+              <span class="title-index">03 //</span> Certifications
+            </h2>
+            <span class="section-tag-line">industry credentials &amp; verifications</span>
+          </div>
+
+          <div class="certifications-list-container">
+            <div class="list-table-header">
+              <span class="col-title">Certification / Credential Name</span>
+              <span class="col-date">Status // Year</span>
+            </div>
+
+            <ol class="project-list-rows" aria-label="List of certifications">
+              <!-- Cert Row 1 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">AWS Certified Solutions Architect – Associate [Placeholder]</h3>
+                      <p class="item-description">Amazon Web Services // Verification ID: AWS-ASA-001928</p>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <span class="item-date">2026</span>
+                  </div>
+                </article>
+              </li>
+
+              <!-- Cert Row 2 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">Certified Kubernetes Administrator (CKA) [Placeholder]</h3>
+                      <p class="item-description">Cloud Native Computing Foundation (CNCF) // In Progress</p>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <span class="item-date cert-status-progress">[In Progress]</span>
+                  </div>
+                </article>
+              </li>
+
+              <!-- Cert Row 3 (Placeholder) -->
+              <li class="project-list-item">
+                <article class="project-row-article">
+                  <div class="item-primary">
+                    <span class="row-marker">&gt;</span>
+                    <div class="item-text-group">
+                      <h3 class="item-title">HashiCorp Certified: Terraform Associate (003) [Placeholder]</h3>
+                      <p class="item-description">HashiCorp Infrastructure as Code Certification</p>
+                    </div>
+                  </div>
+                  <div class="item-meta">
+                    <span class="item-date">2025</span>
+                  </div>
+                </article>
+              </li>
+            </ol>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- --------------------------------------------------------------------
+           5. CONTACT / CTA SECTION
+           -------------------------------------------------------------------- -->
+      <section id="contact" class="content-section contact-section" aria-labelledby="contact-heading">
+        <div class="section-container">
+          <div class="section-title-bar">
+            <h2 id="contact-heading" class="section-title">
+              <span class="title-index">04 //</span> Contacts
+            </h2>
+            <span class="section-tag-line">direct inquiries &amp; opportunities</span>
+          </div>
+
+          <div class="contact-box-grid">
+            <!-- Direct Reach-Out Details -->
+            <div class="contact-box">
+              <h3 class="contact-box-title">Direct Inquiries</h3>
+              <p class="contact-box-text">
+                Currently open to Junior DevOps Engineer, Associate Cloud Engineer, and SRE Associate opportunities. Feel free to reach out via direct email or LinkedIn message.
+              </p>
+              
+              <ul class="contact-methods-list">
+                <li>
+                  <span class="method-label">email:</span>
+                  <a href="mailto:charleskenneth129@gmail.com" class="method-val">charleskenneth129@gmail.com</a>
+                </li>
+                <li>
+                  <span class="method-label">linkedin:</span>
+                  <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="method-val">linkedin.com/in/kenneth-charles-valdez</a>
+                </li>
+                <li>
+                  <span class="method-label">github:</span>
+                  <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="method-val">github.com/chimkenchrls</a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Brutalist Static Message Form -->
+            <div class="contact-box">
+              <h3 class="contact-box-title">Transmit Message</h3>
+              <form id="direct-message-form" class="brutalist-form" action="#" method="POST" novalidate>
+                <div class="form-row">
+                  <label for="form-sender-name" class="form-label">sender.name <span class="req">*</span></label>
+                  <input type="text" id="form-sender-name" name="name" class="form-input" placeholder="recruiter or team lead name" required aria-required="true">
+                  <span class="input-error-msg" id="name-error-msg"></span>
+                </div>
+
+                <div class="form-row">
+                  <label for="form-sender-email" class="form-label">sender.email <span class="req">*</span></label>
+                  <input type="email" id="form-sender-email" name="email" class="form-input" placeholder="name@company.com" required aria-required="true">
+                  <span class="input-error-msg" id="email-error-msg"></span>
+                </div>
+
+                <div class="form-row">
+                  <label for="form-sender-body" class="form-label">payload.body <span class="req">*</span></label>
+                  <textarea id="form-sender-body" name="message" class="form-textarea" rows="4" placeholder="share role details or inquiry..." required aria-required="true"></textarea>
+                  <span class="input-error-msg" id="body-error-msg"></span>
+                </div>
+
+                <div id="form-response-status" class="form-status-region" role="status" aria-live="polite"></div>
+
+                <button type="submit" class="brutalist-btn" id="form-submit-btn">
+                  [SEND PAYLOAD]
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ====================================================================
+           LANDMARK: Footer (Scrollable Main Content Bottom)
+           ==================================================================== -->
+      <footer class="main-footer" role="contentinfo">
+        <div class="footer-inner">
+          <p class="footer-copy">
+            &copy; 2026 Kenneth Charles Valdez. Plain HTML5, CSS3, &amp; Vanilla JavaScript. Zero external dependencies.
+          </p>
+          <div class="footer-links">
+            <a href="#home" class="back-top-link">[TOP ^]</a>
+          </div>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+
+  <!-- ======================================================================
+       INTERACTIVE COMPONENT CONTAINER: Quick Jump / Search Modal (<dialog>)
+       Accessible via [Alt + K] or Sidebar Search Widget
+       ====================================================================== -->
+  <dialog class="quick-jump-dialog" id="quick-jump-dialog" aria-labelledby="dialog-title" aria-modal="true">
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <div class="dialog-title-group">
+          <span class="prompt-symbol">&gt;</span>
+          <h2 id="dialog-title" class="dialog-title">quick navigation</h2>
+        </div>
+        <button type="button" class="dialog-close-btn" id="dialog-close-btn" aria-label="Close navigation dialog">[ESC]</button>
+      </div>
+
+      <div class="dialog-body">
+        <p class="dialog-hint">Press 1-5 to navigate directly, or click a section below:</p>
+        <ul class="quick-jump-list" role="menu">
+          <li role="none">
+            <a href="#home" class="quick-jump-item" role="menuitem" data-jump="home">
+              <span class="jump-name">00 // Home</span>
+              <kbd class="kbd-tag">1</kbd>
+            </a>
+          </li>
+          <li role="none">
+            <a href="#about" class="quick-jump-item" role="menuitem" data-jump="about">
+              <span class="jump-name">01 // About</span>
+              <kbd class="kbd-tag">2</kbd>
+            </a>
+          </li>
+          <li role="none">
+            <a href="#projects" class="quick-jump-item" role="menuitem" data-jump="projects">
+              <span class="jump-name">02 // Projects</span>
+              <kbd class="kbd-tag">3</kbd>
+            </a>
+          </li>
+          <li role="none">
+            <a href="#certifications" class="quick-jump-item" role="menuitem" data-jump="certifications">
+              <span class="jump-name">03 // Certifications</span>
+              <kbd class="kbd-tag">4</kbd>
+            </a>
+          </li>
+          <li role="none">
+            <a href="#contact" class="quick-jump-item" role="menuitem" data-jump="contact">
+              <span class="jump-name">04 // Contacts</span>
+              <kbd class="kbd-tag">5</kbd>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="dialog-footer">
+        <span class="dialog-footer-meta">Navigation Listener Active [Alt + K]</span>
+      </div>
+    </div>
+  </dialog>
+
+
+  <!-- Relative JavaScript Link -->
+  <script src="./script.js"></script>
+</body>
+</html>
