@@ -62,7 +62,7 @@
 
     <div class="sidebar-bottom">
       <p class="status" title="Open to OJT / internship"><span class="status-dot" aria-hidden="true"></span><span class="nav-text">open to OJT / internship</span></p>
-      <button class="copy-email" type="button" data-copy="charleskenneth129@gmail.com" aria-label="Copy email address charleskenneth129@gmail.com" title="Copy email">
+      <button class="copy-email" type="button" data-email data-copy="charleskenneth129@gmail.com" aria-label="Copy email address charleskenneth129@gmail.com" title="Copy email">
         <span class="icon icon-sm icon-copy" aria-hidden="true"></span><span class="nav-text" data-copy-label>charleskenneth129@gmail.com</span>
       </button>
       <p class="visitors" hidden><span class="meta-label">visitors</span><span class="visitors-count">0000</span></p>
@@ -78,7 +78,7 @@
   <main class="main" id="main" tabindex="-1">
     <section class="section hero" id="home" aria-labelledby="hero-name">
       <div class="hero-photo" role="img" tabindex="0" aria-label="Black-and-white portrait of Kenneth Charles Valdez. Hover, focus, or tap to reveal a pixelated alternate image.">
-        <img class="hero-photo-img" src="./assets/profile.jpg" alt="" width="1336" height="1339">
+        <img class="hero-photo-img" src="./assets/profile.jpg" alt="" width="640" height="640">
       </div>
       <div class="hero-text">
         <p class="eyebrow">Building. Learning. Shipping.</p>
@@ -86,7 +86,7 @@
         <p class="hero-title">Aspiring DevOps Engineer | Cloud Engineer</p>
         <p class="hero-location"><span class="icon icon-sm icon-pin" aria-hidden="true"></span>Sariaya, Quezon, Philippines</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="mailto:charleskenneth129@gmail.com">Email me</a>
+          <a class="btn btn-primary" href="mailto:charleskenneth129@gmail.com" data-email>Email me</a>
         </div>
         <p class="social" data-render="social"><a href="https://github.com/chimkenchrls" target="_blank" rel="noopener noreferrer">github</a></p>
       </div>
@@ -159,6 +159,12 @@
     <ul class="quick-jump-list"></ul>
     <p class="quick-jump-hint">↑↓ navigate · enter jump · esc close</p>
   </dialog>
+
+  <div class="toast" hidden>
+    <p class="toast-text"></p>
+    <label class="visually-hidden" for="toast-input">Text to copy</label>
+    <input class="toast-input" id="toast-input" type="text" readonly hidden>
+  </div>
 
   <p class="sr-status visually-hidden" role="status" aria-live="polite"></p>
 </body>

@@ -95,6 +95,12 @@
     return section ? { type: 'jump', id: section.id } : null;
   };
 
+  // Joins optional text parts, skipping missing ones so a bad data.js edit
+  // never prints "undefined".
+  const joinParts = (parts, separator = ' · ') => parts
+    .filter((part) => typeof part === 'string' && part.trim() !== '')
+    .join(separator);
+
   const filterSections = (sections, query) => {
     const q = String(query || '').trim().toLowerCase();
     if (!q) return sections.slice();
@@ -164,7 +170,7 @@
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-      SECTIONS, padCount, safeUrl, computeTiles, revealDelays,
+      SECTIONS, padCount, safeUrl, computeTiles, revealDelays, joinParts,
       isTypingTarget, resolveShortcut, filterSections, validateData,
     };
   }
@@ -287,7 +293,7 @@
         dot.title = 'current';
         titleEl.append(dot);
       }
-      titleEl.append(document.createTextNode(title));
+      titleEl.append(document.createTextNode(joinParts([title])));
       head.append(titleEl, el('span', 'row-meta', meta));
       return head;
     };
@@ -358,7 +364,7 @@
       if (!items.length) return [pendingEl('li', certificationsPending || 'Coming soon.')];
       return items.map((cert) => {
         const li = el('li');
-        li.append(rowHead(cert.title, `${cert.issuer} · ${cert.date}`, false));
+        li.append(rowHead(cert.title, joinParts([cert.issuer, cert.date]), false));
         const link = safeUrl(cert.link);
         if (link) li.append(externalLink(link, 'view credential ↗', 'text-link row-link'));
         return li;
@@ -374,11 +380,25 @@
       container.replaceChildren(pendingEl(tag, 'Content failed to load.'));
     };
 
+    // The static markup carries the email as a no-JS fallback; data.js wins.
+    const applyEmail = ({ profile = {} }) => {
+      const email = typeof profile.email === 'string' ? profile.email.trim() : '';
+      if (!safeUrl(`mailto:${email}`)) return;
+      $$('a[data-email]').forEach((link) => { link.href = `mailto:${email}`; });
+      $$('button[data-email]').forEach((button) => {
+        button.dataset.copy = email;
+        button.setAttribute('aria-label', `Copy email address ${email}`);
+        const label = $('[data-copy-label]', button);
+        if (label) label.textContent = email;
+      });
+    };
+
     const init = (data) => {
       const containers = $$('[data-render]');
       const errors = validateData(data);
       if (errors.length) console.warn('[portfolio] data.js problems:', errors);
       if (!data) { containers.forEach(showLoadError); return; }
+      applyEmail(data);
       containers.forEach((container) => {
         const build = renderers[container.dataset.render];
         if (!build) return;
@@ -721,48 +741,72 @@
      ========================================================================== */
 
   const clipboard = (() => {
-    const labelOf = (button) => $('[data-copy-label]', button) || button;
+    const toast = $('.toast');
+    const toastText = $('.toast-text');
+    const toastInput = $('.toast-input');
+    let toastTimer = 0;
+    let returnFocus = null;
 
-    const restoreLater = (button, label, ms) => {
+    const isVisible = (node) => Boolean(node) && node.getClientRects().length > 0;
+
+    const hideToast = () => {
+      toast.hidden = true;
+      if (document.activeElement === toastInput && returnFocus && isVisible(returnFocus)) {
+        returnFocus.focus({ preventScroll: true });
+      }
+      returnFocus = null;
+    };
+
+    // Visible feedback that works in rail mode, where button labels are hidden.
+    // With copyText, shows a pre-selected read-only field (text inside a
+    // <button> can't be selected in Firefox).
+    const showToast = (message, copyText, ms, button) => {
+      toastText.textContent = message;
+      toastInput.hidden = !copyText;
+      toast.hidden = false;
+      if (copyText) {
+        returnFocus = button;
+        toastInput.value = copyText;
+        toastInput.focus();
+        toastInput.select();
+      }
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(hideToast, ms);
+    };
+
+    const flashLabel = (button, message) => {
+      const label = $('[data-copy-label]', button);
+      if (!isVisible(label)) return false;
+      if (label.dataset.original === undefined) label.dataset.original = label.textContent;
+      label.textContent = message;
       window.clearTimeout(Number(button.dataset.timer));
       button.dataset.timer = String(window.setTimeout(() => {
         label.textContent = label.dataset.original;
-        delete button.dataset.copyHint;
-      }, ms));
-    };
-
-    const remember = (label) => {
-      if (label.dataset.original === undefined) label.dataset.original = label.textContent;
+      }, 1500));
+      return true;
     };
 
     const copy = async (button) => {
       const text = button.dataset.copy;
-      const label = labelOf(button);
-      remember(label);
       try {
         if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard API unavailable');
         await navigator.clipboard.writeText(text);
-        delete button.dataset.copyHint;
-        label.textContent = 'copied!';
+        if (!flashLabel(button, 'copied!')) showToast(`copied ${text}`, null, 1500, button);
         announce(`Copied ${text} to clipboard`);
-        restoreLater(button, label, 1500);
       } catch {
-        label.textContent = text;
-        const range = document.createRange();
-        range.selectNodeContents(label);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        button.dataset.copyHint = 'press ctrl+c';
+        showToast('press ctrl+c to copy', text, 6000, button);
         announce(`Press Control plus C to copy ${text}`);
-        restoreLater(button, label, 4000);
       }
     };
 
     const init = () => {
+      if (!toast || !toastText || !toastInput) return;
       document.addEventListener('click', (event) => {
         const button = event.target.closest('[data-copy]');
         if (button) copy(button);
+      });
+      toastInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') hideToast();
       });
     };
 

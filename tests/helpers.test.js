@@ -134,3 +134,10 @@ test('validateData flags the mistakes a later edit is likely to make', () => {
   }
   assert.deepEqual(validateData(null), ['data: missing']);
 });
+
+test('joinParts drops missing pieces instead of printing undefined', () => {
+  const { joinParts } = require('../script.js');
+  assert.equal(joinParts(['AWS', '2027']), 'AWS · 2027');
+  assert.equal(joinParts([undefined, '2027']), '2027');
+  assert.equal(joinParts([null, '', '  ']), '');
+});

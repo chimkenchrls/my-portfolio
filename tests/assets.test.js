@@ -32,3 +32,8 @@ test('index.html has one section per nav target', () => {
     assert.match(html, new RegExp(`class="nav-link" href="#${id}"`), `nav link #${id} missing`);
   }
 });
+
+test('hero photo is web-sized (it is the LCP element)', () => {
+  const bytes = fs.statSync(path.join(ROOT, 'assets', 'profile.jpg')).size;
+  assert.ok(bytes < 200 * 1024, `profile.jpg is ${Math.round(bytes / 1024)} KB`);
+});
