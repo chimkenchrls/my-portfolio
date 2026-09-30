@@ -1,425 +1,174 @@
 /**
- * Kenneth Charles Valdez - Brutalist Monochromatic Portfolio Script
- * Terminal-inspired interactions, keyboard navigation listeners, theme toggle, and copy utilities
- * Plain ES6+ Vanilla JavaScript - Zero external dependencies
+ * Kenneth Charles Valdez — Portfolio
+ * Vanilla ES2020 in a single IIFE; adds nothing to the global scope.
+ * Content comes from PORTFOLIO_DATA (./assets/data.js).
+ * Section 1 is pure (no DOM) and unit-tested: node --test tests/*.test.js
  */
-
 (() => {
   'use strict';
 
-  // --------------------------------------------------------------------------
-  // 1. Theme Switcher (Monochromatic Light / Dark Mode)
-  // --------------------------------------------------------------------------
-  const initTheme = () => {
-    const themeBtn = document.getElementById('theme-toggle-btn');
-    const themeLabel = document.getElementById('theme-mode-label');
-    if (!themeBtn || !themeLabel) return;
+  /* ==========================================================================
+     1. Constants & pure helpers
+     ========================================================================== */
 
-    // Check saved theme or system preference
-    const savedTheme = localStorage.getItem('kv-portfolio-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+  const SECTIONS = [
+    { id: 'home', label: 'Home', key: '1' },
+    { id: 'about', label: 'About', key: '2' },
+    { id: 'stack', label: 'Stack', key: '3' },
+    { id: 'projects', label: 'Projects', key: '4' },
+    { id: 'certifications', label: 'Certifications', key: '5' },
+  ];
 
-    const applyTheme = (theme) => {
-      document.documentElement.setAttribute('data-theme', theme);
-      themeBtn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
-      themeLabel.textContent = theme === 'dark' ? '[MODE: DARK]' : '[MODE: LIGHT]';
-      localStorage.setItem('kv-portfolio-theme', theme);
-    };
+  const PROJECT_STATUSES = ['done', 'in-progress', 'coming-soon'];
 
-    applyTheme(initialTheme);
-
-    themeBtn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const target = current === 'dark' ? 'light' : 'dark';
-      applyTheme(target);
-    });
+  const padCount = (value, width = 4) => {
+    if (typeof value !== 'number' && typeof value !== 'string') return null;
+    if (typeof value === 'string' && value.trim() === '') return null;
+    const n = Math.floor(Number(value));
+    if (!Number.isFinite(n)) return null;
+    return String(Math.max(0, n)).padStart(width, '0');
   };
 
-  // --------------------------------------------------------------------------
-  // 2. Mobile Sidebar Hamburger Menu
-  // --------------------------------------------------------------------------
-  const initMobileNav = () => {
-    const toggleBtn = document.getElementById('mobile-nav-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const navLinks = document.querySelectorAll('.nav-link');
-    if (!toggleBtn || !sidebar) return;
+  const safeUrl = (url) => {
+    if (typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    return /^(https?:\/\/|mailto:)\S+$/i.test(trimmed) ? trimmed : null;
+  };
 
-    const toggleSidebar = () => {
-      const isOpen = sidebar.classList.contains('mobile-open');
-      if (isOpen) {
-        sidebar.classList.remove('mobile-open');
-        toggleBtn.setAttribute('aria-expanded', 'false');
-      } else {
-        sidebar.classList.add('mobile-open');
-        toggleBtn.setAttribute('aria-expanded', 'true');
-      }
-    };
-
-    toggleBtn.addEventListener('click', toggleSidebar);
-
-    navLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        if (sidebar.classList.contains('mobile-open')) {
-          toggleSidebar();
-        }
+  // Slices one image across a grid×grid set of tiles while replicating
+  // `object-fit: cover` (uniform scale, centred crop) for a square box.
+  const computeTiles = (grid, imageWidth, imageHeight) => {
+    const scale = 1 / Math.min(imageWidth, imageHeight);
+    const renderedW = imageWidth * scale;
+    const renderedH = imageHeight * scale;
+    const leftEdge = -(renderedW - 1) / 2;
+    const topEdge = -(renderedH - 1) / 2;
+    const size = 1 / grid;
+    const tiles = [];
+    for (let i = 0; i < grid * grid; i += 1) {
+      const top = Math.floor(i / grid) * size;
+      const left = (i % grid) * size;
+      tiles.push({
+        top: top * 100,
+        left: left * 100,
+        size: size * 100,
+        bgSize: [renderedW * grid * 100, renderedH * grid * 100],
+        bgPos: [
+          ((leftEdge - left) / (size - renderedW)) * 100 + 0,
+          ((topEdge - top) / (size - renderedH)) * 100 + 0,
+        ],
       });
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!sidebar.contains(e.target) && sidebar.classList.contains('mobile-open')) {
-        toggleSidebar();
-      }
-    });
+    }
+    return tiles;
   };
 
-  // --------------------------------------------------------------------------
-  // 3. Plaintext Email Clipboard Copy Utility
-  // --------------------------------------------------------------------------
-  const initCopyEmail = () => {
-    const copyBtn = document.getElementById('copy-email-btn');
-    const feedback = document.getElementById('copy-feedback');
-    const emailLink = document.getElementById('email-link');
-    if (!copyBtn || !feedback || !emailLink) return;
-
-    const email = emailLink.textContent.trim();
-
-    copyBtn.addEventListener('click', async () => {
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(email);
-        } else {
-          // Fallback
-          const tempInput = document.createElement('input');
-          tempInput.value = email;
-          document.body.appendChild(tempInput);
-          tempInput.select();
-          document.execCommand('copy');
-          document.body.removeChild(tempInput);
-        }
-
-        feedback.textContent = '[COPIED TO CLIPBOARD]';
-        setTimeout(() => {
-          feedback.textContent = '';
-        }, 2200);
-      } catch (err) {
-        feedback.textContent = '[COPY FAILED]';
-      }
-    });
+  // Shuffled reveal order → delay (ms) for each tile index.
+  const revealDelays = (count, stepMs, random = Math.random) => {
+    const order = Array.from({ length: count }, (_, i) => i);
+    for (let i = order.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    const delays = new Array(count);
+    order.forEach((tileIndex, position) => { delays[tileIndex] = position * stepMs; });
+    return delays;
   };
 
-  // --------------------------------------------------------------------------
-  // 4. Quick Navigation Modal Dialog & Alt + K Shortcut
-  // --------------------------------------------------------------------------
-  const initQuickJumpDialog = () => {
-    const dialog = document.getElementById('quick-jump-dialog');
-    const triggerBtn = document.getElementById('search-trigger-btn');
-    const closeBtn = document.getElementById('dialog-close-btn');
-    const jumpLinks = document.querySelectorAll('.quick-jump-item');
-    if (!dialog || !triggerBtn || !closeBtn) return;
+  const isTypingTarget = (el) => {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    const tag = String(el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select';
+  };
 
-    const openDialog = () => {
-      if (typeof dialog.showModal === 'function') {
-        dialog.showModal();
-      } else {
-        dialog.setAttribute('open', '');
-      }
-      triggerBtn.setAttribute('aria-expanded', 'true');
+  const resolveShortcut = (event, typing = false) => {
+    const key = String(event.key || '');
+    if (key === 'Escape') return { type: 'close' };
+    if (event.altKey && !event.ctrlKey && !event.metaKey
+      && (event.code === 'KeyK' || key.toLowerCase() === 'k')) {
+      return { type: 'quick-jump' };
+    }
+    if (typing || event.altKey || event.ctrlKey || event.metaKey) return null;
+    if (key === '/') return { type: 'search' };
+    if (key === 't' || key === 'T') return { type: 'theme' };
+    const section = SECTIONS.find((s) => s.key === key);
+    return section ? { type: 'jump', id: section.id } : null;
+  };
+
+  const filterSections = (sections, query) => {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return sections.slice();
+    return sections.filter((s) => s.label.toLowerCase().includes(q) || s.id.includes(q) || s.key === q);
+  };
+
+  const validateData = (data) => {
+    if (!data || typeof data !== 'object') return ['data: missing'];
+    const errors = [];
+    const isText = (v) => typeof v === 'string' && v.trim() !== '';
+    const isOptionalText = (v) => v === null || isText(v);
+    const isOptionalUrl = (v) => v === null || safeUrl(v) !== null;
+    const checkList = (name, list, check) => {
+      if (!Array.isArray(list)) { errors.push(`${name}: must be an array`); return; }
+      list.forEach((item, i) => check(item || {}, `${name}[${i}]`));
     };
 
-    const closeDialog = () => {
-      if (typeof dialog.close === 'function') {
-        dialog.close();
-      } else {
-        dialog.removeAttribute('open');
-      }
-      triggerBtn.setAttribute('aria-expanded', 'false');
-    };
-
-    triggerBtn.addEventListener('click', openDialog);
-    closeBtn.addEventListener('click', closeDialog);
-
-    // Jump links close modal on click
-    jumpLinks.forEach(link => {
-      link.addEventListener('click', () => {
-        closeDialog();
+    const profile = data.profile;
+    if (!profile) {
+      errors.push('profile: missing');
+    } else {
+      if (!isText(profile.email)) errors.push('profile.email: required text');
+      ['github', 'linkedin'].forEach((k) => {
+        if (!isOptionalUrl(profile[k])) errors.push(`profile.${k}: must be an https URL or null`);
       });
-    });
-
-    // Close on backdrop click
-    dialog.addEventListener('click', (e) => {
-      const rect = dialog.getBoundingClientRect();
-      const inDialog = (
-        rect.top <= e.clientY &&
-        e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX &&
-        e.clientX <= rect.left + rect.width
-      );
-      if (!inDialog) {
-        closeDialog();
-      }
-    });
-  };
-
-  // --------------------------------------------------------------------------
-  // 5. Global Keyboard Shortcut Navigation Listeners
-  // --------------------------------------------------------------------------
-  const initKeyboardNavigation = () => {
-    const dialog = document.getElementById('quick-jump-dialog');
-    const sections = {
-      '1': '#home',
-      '2': '#about',
-      '3': '#projects',
-      '4': '#certifications',
-      '5': '#contact'
-    };
-
-    document.addEventListener('keydown', (e) => {
-      const activeElement = document.activeElement;
-      const isInput = activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        activeElement.isContentEditable
-      );
-
-      // Alt + K shortcut for Quick Navigation Dialog
-      if ((e.altKey && (e.key === 'k' || e.key === 'K')) ||
-          ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) {
-        e.preventDefault();
-        if (dialog) {
-          if (dialog.open) {
-            dialog.close();
-          } else {
-            dialog.showModal();
-          }
-        }
-        return;
-      }
-
-      // Ignore single number shortcuts if user is typing in a form
-      if (isInput) return;
-
-      // 1-5 keys for jumping between sections
-      if (sections[e.key]) {
-        const targetSection = document.querySelector(sections[e.key]);
-        if (targetSection) {
-          e.preventDefault();
-          targetSection.scrollIntoView({ behavior: 'smooth' });
-          if (dialog && dialog.open) {
-            dialog.close();
-          }
-        }
-      }
-    });
-  };
-
-  // --------------------------------------------------------------------------
-  // 6. ScrollSpy Active Navigation Highlighting
-  // --------------------------------------------------------------------------
-  const initScrollSpy = () => {
-    const navLinks = document.querySelectorAll('.nav-link');
-    const sectionIds = ['home', 'about', 'projects', 'certifications', 'contact'];
-
-    const onScroll = () => {
-      const scrollPos = window.scrollY + 180;
-
-      sectionIds.forEach(id => {
-        const section = document.getElementById(id);
-        if (!section) return;
-
-        const top = section.offsetTop;
-        const height = section.offsetHeight;
-
-        if (scrollPos >= top && scrollPos < top + height) {
-          navLinks.forEach(link => {
-            if (link.getAttribute('data-nav') === id) {
-              link.classList.add('active');
-            } else {
-              link.classList.remove('active');
-            }
-          });
-        }
-      });
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  };
-
-  // --------------------------------------------------------------------------
-  // 7. Brutalist Contact Form Validation & Feedback
-  // --------------------------------------------------------------------------
-  const initContactForm = () => {
-    const form = document.getElementById('direct-message-form');
-    const statusRegion = document.getElementById('form-response-status');
-    const submitBtn = document.getElementById('form-submit-btn');
-    if (!form || !statusRegion) return;
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      const name = document.getElementById('form-sender-name');
-      const email = document.getElementById('form-sender-email');
-      const body = document.getElementById('form-sender-body');
-
-      const nameErr = document.getElementById('name-error-msg');
-      const emailErr = document.getElementById('email-error-msg');
-      const bodyErr = document.getElementById('body-error-msg');
-
-      // Clear errors
-      nameErr.textContent = '';
-      emailErr.textContent = '';
-      bodyErr.textContent = '';
-      statusRegion.className = 'form-status-region';
-      statusRegion.textContent = '';
-
-      let hasError = false;
-
-      if (!name.value.trim()) {
-        nameErr.textContent = 'err: name field required';
-        hasError = true;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email.value.trim() || !emailRegex.test(email.value.trim())) {
-        emailErr.textContent = 'err: valid email address required';
-        hasError = true;
-      }
-
-      if (!body.value.trim()) {
-        bodyErr.textContent = 'err: message payload cannot be empty';
-        hasError = true;
-      }
-
-      if (hasError) {
-        statusRegion.className = 'form-status-region error';
-        statusRegion.textContent = '[VALIDATION FAILED - CHECK REQUIRED FIELDS]';
-        return;
-      }
-
-      // Simulate submission
-      submitBtn.disabled = true;
-      submitBtn.textContent = '[TRANSMITTING PAYLOAD...]';
-
-      setTimeout(() => {
-        statusRegion.className = 'form-status-region success';
-        statusRegion.textContent = `[TRANSMISSION SUCCESSFUL - ACK RECEIVED FOR ${email.value.trim()}]`;
-        form.reset();
-        submitBtn.disabled = false;
-        submitBtn.textContent = '[SEND PAYLOAD]';
-      }, 700);
-    });
-  };
-
-  // --------------------------------------------------------------------------
-  // 7b. Scroll Reveal Animations (IntersectionObserver)
-  // --------------------------------------------------------------------------
-  const initScrollReveal = () => {
-    // Respect prefers-reduced-motion
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    // Elements to animate individually
-    const singleTargets = [
-      '.section-title-bar',
-      '.about-body-text',
-      '.toolchain-box',
-      '.stats-grid',
-      '.project-list-container',
-      '.certifications-list-container',
-      '.contact-box-grid',
-      '.hero-name',
-      '.hero-bio',
-      '.hero-social-links',
-      '.hero-portrait-col',
-    ];
-
-    // Elements to stagger per-child
-    const staggerTargets = [
-      { parent: '.stat-cell', selector: '.stats-grid' },
-      { parent: '.project-list-item', selector: '.project-list-rows' },
-      { parent: '.contact-box', selector: '.contact-box-grid' },
-    ];
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.setAttribute('data-animate', 'visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12 });
-
-    // Tag and observe single targets
-    singleTargets.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        // Hero elements are above-fold — mark visible immediately
-        const inHero = el.closest('#home');
-        el.setAttribute('data-animate', inHero ? 'visible' : '');
-        if (!inHero) observer.observe(el);
-      });
-    });
-
-    // Tag stagger children
-    staggerTargets.forEach(({ parent, selector }) => {
-      document.querySelectorAll(selector).forEach(container => {
-        const children = container.querySelectorAll(`:scope > ${parent.replace('.', '')}, :scope > li`);
-        children.forEach((child, i) => {
-          child.setAttribute('data-animate', '');
-          child.setAttribute('data-animate-delay', String((i % 4) + 1));
-          observer.observe(child);
-        });
-      });
-    });
-  };
-
-  // --------------------------------------------------------------------------
-  // 8. Desktop Sidebar Collapse Toggle
-  // --------------------------------------------------------------------------
-  const initSidebarCollapse = () => {
-    const sidebar = document.getElementById('sidebar');
-    const collapseBtn = document.getElementById('sidebar-collapse-btn');
-    const collapseIcon = document.getElementById('collapse-icon');
-    if (!sidebar || !collapseBtn || !collapseIcon) return;
-
-    const STORAGE_KEY = 'kv-sidebar-collapsed';
-
-    const applyCollapsed = (collapsed) => {
-      if (collapsed) {
-        sidebar.classList.add('sidebar--collapsed');
-        collapseIcon.textContent = '[>>]';
-        collapseBtn.setAttribute('aria-expanded', 'false');
-      } else {
-        sidebar.classList.remove('sidebar--collapsed');
-        collapseIcon.textContent = '[<<]';
-        collapseBtn.setAttribute('aria-expanded', 'true');
-      }
-    };
-
-    // Restore saved state
-    const savedState = localStorage.getItem(STORAGE_KEY);
-    if (savedState === 'true') {
-      applyCollapsed(true);
+      if (!isOptionalText(profile.discord)) errors.push('profile.discord: text or null');
     }
 
-    collapseBtn.addEventListener('click', () => {
-      const isCollapsed = sidebar.classList.contains('sidebar--collapsed');
-      applyCollapsed(!isCollapsed);
-      localStorage.setItem(STORAGE_KEY, String(!isCollapsed));
+    checkList('stats', data.stats, (s, p) => {
+      if (!isText(s.value) || !isText(s.label)) errors.push(`${p}: value and label required`);
     });
+    checkList('highlights', data.highlights, (h, p) => {
+      if (!isText(h.icon) || !isText(h.label)) errors.push(`${p}: icon and label required`);
+    });
+    checkList('experience', data.experience, (e, p) => {
+      if (!isText(e.title) || !isText(e.org) || !isText(e.dates)) errors.push(`${p}: title, org, dates required`);
+      if (!Array.isArray(e.bullets)) errors.push(`${p}.bullets: must be an array`);
+    });
+    checkList('education', data.education, (e, p) => {
+      if (!isText(e.school) || !isText(e.degree) || !isText(e.dates)) errors.push(`${p}: school, degree, dates required`);
+    });
+    checkList('stack', data.stack, (g, p) => {
+      if (!isText(g.category)) errors.push(`${p}.category: required text`);
+      checkList(`${p}.items`, g.items, (item, ip) => {
+        if (!isText(item.name)) errors.push(`${ip}.name: required text`);
+        if (!isOptionalText(item.icon)) errors.push(`${ip}.icon: slug or null`);
+      });
+    });
+    checkList('projects', data.projects, (pr, p) => {
+      if (!isText(pr.title)) errors.push(`${p}.title: required text`);
+      if (!isText(pr.meta)) errors.push(`${p}.meta: required text`);
+      if (!PROJECT_STATUSES.includes(pr.status)) errors.push(`${p}.status: one of ${PROJECT_STATUSES.join(', ')}`);
+      if (!isOptionalText(pr.description)) errors.push(`${p}.description: text or null`);
+      if (!Array.isArray(pr.tags)) errors.push(`${p}.tags: must be an array`);
+      const links = pr.links || {};
+      ['source', 'live'].forEach((k) => {
+        if (links[k] !== undefined && !isOptionalUrl(links[k])) errors.push(`${p}.links.${k}: https URL or null`);
+      });
+    });
+    checkList('certifications', data.certifications, (c, p) => {
+      if (!isText(c.title) || !isText(c.issuer) || !isText(c.date)) errors.push(`${p}: title, issuer, date required`);
+      if (c.link !== undefined && !isOptionalUrl(c.link)) errors.push(`${p}.link: https URL or null`);
+    });
+    if (!isText(data.certificationsPending)) errors.push('certificationsPending: required text');
+    return errors;
   };
 
-  // --------------------------------------------------------------------------
-  // Initialize Components on DOMContentLoaded
-  // --------------------------------------------------------------------------
-  document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    initMobileNav();
-    initCopyEmail();
-    initQuickJumpDialog();
-    initKeyboardNavigation();
-    initScrollSpy();
-    initContactForm();
-    initScrollReveal();
-    initSidebarCollapse();
-  });
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      SECTIONS, padCount, safeUrl, computeTiles, revealDelays,
+      isTypingTarget, resolveShortcut, filterSections, validateData,
+    };
+  }
+  if (typeof document === 'undefined') return;
+
+  /* DOM modules are added below in Tasks 4–6. */
 })();

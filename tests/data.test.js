@@ -44,3 +44,9 @@ test('every highlight icon has a file on disk', () => {
     assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', `${h.icon}.svg`)), `${h.icon}.svg missing`);
   }
 });
+
+test('the real data passes validateData', () => {
+  const data = require('../assets/data.js');
+  const { validateData } = require('../script.js');
+  assert.deepEqual(validateData(data), []);
+});
