@@ -606,8 +606,8 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 
 /* 17. Quick jump dialog =================================================== */
 .game {
-  width: min(640px, calc(100vw - 24px));
-  margin: 15vh auto auto;
+  width: min(960px, calc(100vw - 48px));
+  margin: 10vh auto auto;
   padding: 16px;
   color: var(--fg);
   /* Frosted glass: the page stays faintly visible behind the game. */
@@ -649,7 +649,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 .game-canvas {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 1;
+  aspect-ratio: 3 / 1;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -808,21 +808,9 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .backdrop { position: fixed; inset: var(--topbar-h) 0 0 0; z-index: 25; display: block; background: rgba(0, 0, 0, 0.4); }
   body.drawer-open { overflow: hidden; }
 
-  /* chimken goes full screen on phones; the playfield grows into extra sky. */
-  .game {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
-    margin: 0;
-    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
-      max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-    border: 0;
-    border-radius: 0;
-  }
-  .game[open] { display: flex; flex-direction: column; }
-  .game-canvas { flex: 1; min-height: 0; aspect-ratio: auto; }
+  /* chimken on phones: a centered card with a taller playfield for more sky. */
+  .game { width: calc(100vw - 24px); margin: auto; padding: 12px; }
+  .game-canvas { aspect-ratio: auto; height: clamp(240px, 45dvh, 380px); }
 
   .main { margin-left: 0; padding: 28px 16px 24px; }
   .section { padding-bottom: 48px; scroll-margin-top: calc(var(--topbar-h) + 16px); }
