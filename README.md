@@ -1,4 +1,4 @@
-# Kenneth Charles Valdez — Portfolio
+# Portfolio
 
 [![Check & Deploy](https://github.com/chimkenchrls/my-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/chimkenchrls/my-portfolio/actions/workflows/deploy.yml)
 
