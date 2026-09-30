@@ -395,13 +395,394 @@
   })();
 
   /* ==========================================================================
+     4. Theme — light/dark with a circular View Transition ripple
+     ========================================================================== */
+
+  const theme = (() => {
+    const button = $('.theme-toggle');
+    const current = () => (root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+    const syncButton = () => {
+      if (!button) return;
+      const t = current();
+      $('.theme-label', button).textContent = `[MODE: ${t.toUpperCase()}]`;
+      const icon = $('.theme-icon', button);
+      icon.classList.toggle('icon-sun', t === 'light');
+      icon.classList.toggle('icon-moon', t === 'dark');
+      button.setAttribute('aria-label', `Switch to ${t === 'dark' ? 'light' : 'dark'} mode`);
+    };
+
+    const apply = (t) => {
+      root.setAttribute('data-theme', t);
+      storage.set('localStorage', 'theme', t);
+      syncButton();
+    };
+
+    const toggle = (origin = button) => {
+      const next = current() === 'dark' ? 'light' : 'dark';
+      if (typeof document.startViewTransition !== 'function' || prefersReducedMotion()) {
+        apply(next);
+        return;
+      }
+      const rect = origin ? origin.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0 };
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+      root.style.setProperty('--ripple-x', `${x}px`);
+      root.style.setProperty('--ripple-y', `${y}px`);
+      root.style.setProperty('--ripple-radius', `${radius}px`);
+      document.startViewTransition(() => apply(next));
+    };
+
+    const init = () => {
+      syncButton();
+      if (button) button.addEventListener('click', () => toggle(button));
+    };
+
+    return { init, toggle };
+  })();
+
+  /* ==========================================================================
+     5. Layout — tablet rail, desktop collapse, mobile drawer
+     ========================================================================== */
+
+  const layout = (() => {
+    const body = document.body;
+    const sidebar = $('#sidebar');
+    const menuToggle = $('.menu-toggle');
+    const backdrop = $('.backdrop');
+    const collapseToggle = $('.collapse-toggle');
+    const mobileQuery = window.matchMedia('(max-width: 639.98px)');
+    const tabletQuery = window.matchMedia('(min-width: 640px) and (max-width: 1024px)');
+    let collapsed = storage.get('localStorage', 'sidebar-collapsed') === 'true';
+
+    const updateRail = () => {
+      body.classList.toggle('is-rail', tabletQuery.matches || (!mobileQuery.matches && collapsed));
+      if (!collapseToggle) return;
+      collapseToggle.textContent = collapsed ? '[>>]' : '[<<]';
+      collapseToggle.setAttribute('aria-expanded', String(!collapsed));
+      collapseToggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+    };
+
+    const isDrawerOpen = () => sidebar.classList.contains('is-open');
+
+    const openDrawer = () => {
+      sidebar.classList.add('is-open');
+      backdrop.hidden = false;
+      body.classList.add('drawer-open');
+      menuToggle.setAttribute('aria-expanded', 'true');
+      menuToggle.setAttribute('aria-label', 'Close navigation');
+      const first = $('.nav-link', sidebar);
+      if (first) first.focus();
+    };
+
+    const closeDrawer = ({ restoreFocus = true } = {}) => {
+      if (!isDrawerOpen()) return;
+      sidebar.classList.remove('is-open');
+      backdrop.hidden = true;
+      body.classList.remove('drawer-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.setAttribute('aria-label', 'Open navigation');
+      if (restoreFocus) menuToggle.focus();
+    };
+
+    const trapFocus = (event) => {
+      if (event.key !== 'Tab' || !isDrawerOpen() || !mobileQuery.matches) return;
+      const focusables = [menuToggle, ...$$('a[href], button:not([disabled])', sidebar)]
+        .filter((node) => node.getClientRects().length > 0);
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const init = () => {
+      updateRail();
+      tabletQuery.addEventListener('change', updateRail);
+      mobileQuery.addEventListener('change', () => {
+        updateRail();
+        if (!mobileQuery.matches) closeDrawer({ restoreFocus: false });
+      });
+      if (collapseToggle) {
+        collapseToggle.addEventListener('click', () => {
+          collapsed = !collapsed;
+          storage.set('localStorage', 'sidebar-collapsed', String(collapsed));
+          updateRail();
+        });
+      }
+      menuToggle.addEventListener('click', () => (isDrawerOpen() ? closeDrawer() : openDrawer()));
+      backdrop.addEventListener('click', () => closeDrawer());
+      sidebar.addEventListener('click', (event) => {
+        if (mobileQuery.matches && event.target.closest('a[href^="#"]')) closeDrawer({ restoreFocus: false });
+      });
+      document.addEventListener('keydown', trapFocus);
+    };
+
+    return { init, closeDrawer };
+  })();
+
+  /* ==========================================================================
+     6. Nav — active section tracking and programmatic jumps
+     ========================================================================== */
+
+  const nav = (() => {
+    const links = $$('.nav-link');
+
+    const setActive = (id) => {
+      links.forEach((link) => {
+        const on = link.dataset.section === id;
+        link.classList.toggle('is-active', on);
+        if (on) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    const jumpTo = (id) => {
+      const target = document.getElementById(id);
+      if (!target) return;
+      target.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+      history.replaceState(null, '', `#${id}`);
+      setActive(id);
+    };
+
+    // The last section is short and may never cross the band; pin it at page bottom.
+    const atBottom = () => window.innerHeight + window.scrollY >= root.scrollHeight - 4;
+    const lastId = SECTIONS[SECTIONS.length - 1].id;
+
+    const init = () => {
+      setActive(SECTIONS[0].id);
+      if (!('IntersectionObserver' in window)) return;
+      const observer = new IntersectionObserver((entries) => {
+        if (atBottom()) { setActive(lastId); return; }
+        entries.forEach((entry) => { if (entry.isIntersecting) setActive(entry.target.id); });
+      }, { rootMargin: '-35% 0px -60% 0px' });
+      SECTIONS.forEach(({ id }) => {
+        const section = document.getElementById(id);
+        if (section) observer.observe(section);
+      });
+
+      let ticking = false;
+      window.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        window.requestAnimationFrame(() => {
+          ticking = false;
+          if (atBottom()) setActive(lastId);
+        });
+      }, { passive: true });
+    };
+
+    return { init, jumpTo };
+  })();
+
+  /* ==========================================================================
+     7. Quick jump — Alt+K / "/" section switcher
+     ========================================================================== */
+
+  const quickJump = (() => {
+    const dialog = $('.quick-jump');
+    const input = $('.quick-jump-input');
+    const list = $('.quick-jump-list');
+    const trigger = $('.quick-jump-trigger');
+    let returnFocus = null;
+
+    const items = () => $$('.quick-jump-item', list);
+
+    const renderList = () => {
+      const matches = filterSections(SECTIONS, input.value);
+      if (!matches.length) {
+        list.replaceChildren(el('li', 'quick-jump-empty', 'no matching section'));
+        return;
+      }
+      list.replaceChildren(...matches.map((section) => {
+        const li = el('li');
+        const button = el('button', 'quick-jump-item');
+        button.type = 'button';
+        button.dataset.target = section.id;
+        button.append(
+          el('span', 'quick-jump-index', `0${section.key}`),
+          el('span', null, section.label),
+          el('kbd', 'kbd', section.key),
+        );
+        li.append(button);
+        return li;
+      }));
+    };
+
+    const isOpen = () => Boolean(dialog && dialog.open);
+
+    const open = () => {
+      if (!dialog || typeof dialog.showModal !== 'function') return;
+      if (isOpen()) { input.focus(); return; }
+      returnFocus = document.activeElement;
+      layout.closeDrawer({ restoreFocus: false });
+      input.value = '';
+      renderList();
+      dialog.showModal();
+      input.focus();
+    };
+
+    const close = () => { if (isOpen()) dialog.close(); };
+
+    const go = (id) => {
+      close();
+      nav.jumpTo(id);
+    };
+
+    const init = () => {
+      if (!dialog || typeof dialog.showModal !== 'function') {
+        if (trigger) trigger.hidden = true;
+        return;
+      }
+      if (trigger) trigger.addEventListener('click', open);
+      input.addEventListener('input', renderList);
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const first = items()[0];
+          if (first) go(first.dataset.target);
+        } else if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          const first = items()[0];
+          if (first) first.focus();
+        }
+      });
+      list.addEventListener('click', (event) => {
+        const button = event.target.closest('.quick-jump-item');
+        if (button) go(button.dataset.target);
+      });
+      list.addEventListener('keydown', (event) => {
+        const all = items();
+        const index = all.indexOf(document.activeElement);
+        if (index === -1) return;
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          all[Math.min(index + 1, all.length - 1)].focus();
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          (index === 0 ? input : all[index - 1]).focus();
+        }
+      });
+      dialog.addEventListener('click', (event) => { if (event.target === dialog) close(); });
+      dialog.addEventListener('close', () => {
+        if (returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length) {
+          returnFocus.focus({ preventScroll: true });
+        }
+        returnFocus = null;
+      });
+    };
+
+    return { init, open, close };
+  })();
+
+  /* ==========================================================================
+     8. Keyboard shortcuts
+     ========================================================================== */
+
+  const keyboard = (() => {
+    const init = () => {
+      document.addEventListener('keydown', (event) => {
+        if (event.defaultPrevented || event.repeat) return;
+        const action = resolveShortcut(event, isTypingTarget(event.target));
+        if (!action) return;
+        switch (action.type) {
+          case 'close':
+            quickJump.close();
+            layout.closeDrawer();
+            break;
+          case 'quick-jump':
+          case 'search':
+            event.preventDefault();
+            quickJump.open();
+            break;
+          case 'theme':
+            theme.toggle();
+            break;
+          case 'jump':
+            event.preventDefault();
+            quickJump.close();
+            nav.jumpTo(action.id);
+            break;
+          default:
+            break;
+        }
+      });
+    };
+    return { init };
+  })();
+
+  /* ==========================================================================
+     9. Clipboard — copy email / discord with a manual-copy fallback
+     ========================================================================== */
+
+  const clipboard = (() => {
+    const labelOf = (button) => $('[data-copy-label]', button) || button;
+
+    const restoreLater = (button, label, ms) => {
+      window.clearTimeout(Number(button.dataset.timer));
+      button.dataset.timer = String(window.setTimeout(() => {
+        label.textContent = label.dataset.original;
+        delete button.dataset.copyHint;
+      }, ms));
+    };
+
+    const remember = (label) => {
+      if (label.dataset.original === undefined) label.dataset.original = label.textContent;
+    };
+
+    const copy = async (button) => {
+      const text = button.dataset.copy;
+      const label = labelOf(button);
+      remember(label);
+      try {
+        if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard API unavailable');
+        await navigator.clipboard.writeText(text);
+        delete button.dataset.copyHint;
+        label.textContent = 'copied!';
+        announce(`Copied ${text} to clipboard`);
+        restoreLater(button, label, 1500);
+      } catch {
+        label.textContent = text;
+        const range = document.createRange();
+        range.selectNodeContents(label);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        button.dataset.copyHint = 'press ctrl+c';
+        announce(`Press Control plus C to copy ${text}`);
+        restoreLater(button, label, 4000);
+      }
+    };
+
+    const init = () => {
+      document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-copy]');
+        if (button) copy(button);
+      });
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
      99. Boot
      ========================================================================== */
 
   const init = () => {
     const data = typeof PORTFOLIO_DATA !== 'undefined' ? PORTFOLIO_DATA : null;
     render.init(data);
-    /* module inits (Tasks 5–6) go here */
+    theme.init();
+    layout.init();
+    nav.init();
+    quickJump.init();
+    keyboard.init();
+    clipboard.init();
+    /* motion inits (Task 6) go here */
     const year = $('.footer-year');
     if (year) year.textContent = String(new Date().getFullYear());
   };
