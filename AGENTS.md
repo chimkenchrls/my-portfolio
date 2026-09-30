@@ -8,31 +8,58 @@ Description: This portfolio showcases hands-on expertise in cloud infrastructure
 
 Primary Goal: Showcase portfolio
 
-2. Technical Stack & Constraints
-Core Stack: Plain HTML5, CSS3, Vanilla JavaScript (ES6+).
+## 2. Technical Stack & Constraints
+Core Stack: Plain HTML5, CSS3, Vanilla JavaScript (ES2020+).
 
-Zero External Dependencies: Do NOT use external build tools, package managers (npm/yarn), or thirdparty CSS/JS frameworks (no Tailwind CDN, Bootstrap, React, or jQuery).
+Zero External Dependencies: No build tools, package managers, or third-party CSS/JS frameworks in the site. Tooling that runs only in CI via `npx`/Actions (html-validate, lychee) is allowed. Tests use Node's built-in `node:test`.
 
-Font & Icon Constraints: Modern web-safe system font stacks or Google Fonts via `` tag. Use inline SVGs or local SVG files in assets/ for icons.
+Fonts & Icons: Geist and Geist Mono via Google Fonts `<link>`; Geist Pixel self-hosted at `./assets/fonts/`. Icons are local SVGs in `./assets/icons/` (UI) and `./assets/icons/stack/` (simple-icons brand marks), drawn via CSS `mask-image` so they follow the theme color.
 
-Paths: All internal links, stylesheets, scripts, and asset references must use relative paths (e.g., ./assets/logo.png, ./style.css, ./script.js) to ensure compatibility with GitHub Pages subdirectory hosting.
+Paths: All internal references use relative paths (`./style.css`, `./assets/...`) for GitHub Pages subdirectory hosting.
+
+Globals: `assets/data.js` defines exactly one global, `PORTFOLIO_DATA`. `script.js` is a single IIFE and adds nothing to the global scope.
 
 ## 3. Directory Layout
 ```text
-my-website/
+my-portfolio/
 ├── AGENTS.md
-├── index.html
-├── style.css
-├── script.js
-└── assets/
- └── [List key files placed here, e.g., logo.png, hero.jpg]
+├── README.md
+├── index.html              static shell; hero/bio hard-coded, lists rendered from data
+├── style.css               tokens → base → layout → sections → motion → responsive
+├── script.js               pure helpers (tested) + DOM modules
+├── assets/
+│   ├── data.js             ALL editable content (PORTFOLIO_DATA)
+│   ├── profile.jpg         hero portrait (B&W)
+│   ├── light.jpg           pixel-reveal alternate image
+│   ├── logo.svg            favicon
+│   ├── fonts/              GeistPixel-Square.woff2 + OFL.txt
+│   └── icons/              UI icons; icons/stack/ brand icons
+├── tests/                  node:test suites (data, helpers, assets)
+├── .github/workflows/deploy.yml
+└── docs/superpowers/       specs and plans
+```
 
-4. UI/UX & Design GuidelinesColor Palette: Monochromatic, high-contrast, minimalist theme.   Primary / Text: #000000 (Pure Black) for main typography, headings, and section borders.   Background: #FFFFFF (White) featuring a subtle, faint dotted grid pattern across the entire canvas.   Accent / Meta: Light gray for secondary text, timestamps, and subtle keyboard shortcut UI boxes.   Typography: A brutalist, terminal-inspired aesthetic utilizing a monospace font stack (e.g., Courier New, Roboto Mono, Fira Code) for navigation links, metadata, and structural elements, paired with clean sans-serif for body paragraphs.   Layout Approach: A fixed two-column desktop layout utilizing a static left-hand sidebar for navigation and a scrollable right-hand main content area. Built using CSS Flexbox and CSS Grid.   Visual Style: Use extremely thin (1px solid #eaeaea) lines for borders and dividers between grid items and list rows. All profile imagery should feature a black-and-white, dithered, or halftone filter effect.   Responsiveness: Fluid breakpoints (Mobile: < 640px, Tablet: 640px - 1024px, Desktop: > 1024px). On mobile, the left sidebar must collapse into a mobile hamburger menu.
+## 4. UI/UX & Design Guidelines
+Tokens (`:root`, dark under `[data-theme="dark"]`):
+- Light: `--bg #ffffff`, `--bg-alt #fafafa`, `--fg #0a0a0a`, `--fg-muted #6d6d72`, `--border #e4e4e7`
+- Dark: `--bg rgb(12,12,15)`, `--bg-alt #18181b`, `--fg #fafafa`, `--fg-muted #a6a6ad`, `--border #27272a`
+- A faint dotted grid (`--dot`) covers the whole canvas in both themes.
 
-5. Required SectionsSidebar / Navigation (Left Column):Top: Minimalist text-based brand/name.   
-Middle: Categorized vertical navigation links (e.g., Projects, Experience, Stack) with small, simple vector icons for primary sections.   
-Interactive widgets: Small keyboard shortcut hints (e.g., Alt + K) next to search or chat actions.   
-Bottom: System toggles (light/dark mode, sound), visitor count metrics, and a direct plaintext email contact link.   Hero Section (Main Column):Halftone/dithered portrait image centered or left-aligned above the bio.   Large, crisp heading for the name.   Short, punchy professional bio.   Minimalist social links rendered as lowercase plain text, separated by slashes (e.g., github / linkedin / instagram / x).   
-Core Content Section (Main Column):Stats & Highlights Grid: A multi-column horizontal grid separated by thin borders displaying key metrics, community sizes, hackathon wins, or certifications.   Project/Experience List: Clean, list-based rows for projects or articles. The item title is left-aligned, and the date/year is right-aligned in a smaller, lighter monospace font.   Interactive Feature: Light/Dark mode toggle in the sidebar and keyboard shortcut navigation listeners.Contact / CTA Section: Directly integrated into the bottom-left sidebar as a clean, copyable email address and status indicator.   
+Typography: Geist (body), Geist Mono (nav, labels, metadata, dates, tags; uppercase with wide letter-spacing for labels), Geist Pixel (hero name and stat values only).
 
-6. Agent Rules of EngagementAlways generate complete, functional code blocks—avoid placeholders, ellipsis comments (/* code continues here */), or truncated snippets.Ensure semantic HTML tags are prioritized (`, , ``, , , , `).Keep CSS organized with clear section headers, CSS custom properties (:root), and smooth transitions.Keep JavaScript modular, event-driven, and scoped without polluting global namespace.
+Layout: fixed 260px sidebar + scrolling main column (max 880px) on desktop (>1024px, collapsible to a 64px rail); 64px icon rail on tablet (640–1024px); sticky top bar + slide-in drawer on mobile (<640px).
+
+Visual Style: 1px `var(--border)` dividers; gradient-line section dividers with mono labels; list rows with the title on the left and the date/status on the right in small muted mono; dashed borders mark "coming soon" content. Imagery is black-and-white.
+
+Motion (all disabled under `prefers-reduced-motion`): one-shot scroll reveal (fade + 16px slide, 60ms stagger); 8×8 pixel-tile photo reveal on hover/focus/tap; circular View Transition ripple on theme toggle.
+
+## 5. Sections
+Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), quick jump (Alt+K or /), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
+Main: hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → stats row → About (bio, highlight chips, Experience + Education) → Stack → Projects → Certifications → footer `© <year> Kenneth Charles`.
+
+## 6. Agent Rules of Engagement
+- Content changes go in `assets/data.js` only; use `null` for missing items (never `""`), and never invent metrics, projects, or credentials.
+- Run `node --test tests/*.test.js` before committing; CI runs the same tests plus html-validate and lychee.
+- Generate complete code with no placeholders or truncated snippets. Prefer semantic HTML (`aside`, `nav`, `main`, `section`, `dl`, `dialog`, `footer`).
+- Keep CSS organized under the numbered section headers using the tokens above. Keep JS modular inside the IIFE; pure logic goes in section 1 with tests.
+- Wrap all storage access in try/catch; build DOM with `textContent`, never `innerHTML` with data.
