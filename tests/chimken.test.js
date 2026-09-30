@@ -178,3 +178,59 @@ test('stars twinkle within a gentle range, and hold still with reduced motion', 
   }
   assert.equal(starAlpha(1.3, 0, true), starAlpha(0.2, 9, true));
 });
+
+const { gameOverSummary, passedRival, bragText, spawnSparks, stepSparks } = require('../script.js');
+const RIVAL = { owner: 'ck', highScore: 3236 };
+
+test('game over summary tells a loser the score to beat', () => {
+  const s = gameOverSummary({ score: 102, hi: 1563 }, RIVAL, false);
+  assert.equal(s.beat, false);
+  assert.deepEqual(s.lines, [
+    'GAME OVER',
+    'score 00102 · best 01563',
+    "you didn't beat ck's high score: 3236",
+    'space / tap to retry',
+  ]);
+});
+
+test('game over summary celebrates beating ck, mentioning a new crown once', () => {
+  const first = gameOverSummary({ score: 4000, hi: 4000 }, RIVAL, true);
+  assert.equal(first.beat, true);
+  assert.equal(first.lines[2], "you beat ck's high score: 3236 · crown unlocked");
+  const again = gameOverSummary({ score: 3500, hi: 4000 }, RIVAL, false);
+  assert.equal(again.lines[2], "you beat ck's high score: 3236");
+});
+
+test('game over summary works without a rival configured', () => {
+  const s = gameOverSummary({ score: 5, hi: 9 }, null, false);
+  assert.equal(s.beat, false);
+  assert.deepEqual(s.lines, ['GAME OVER', 'score 00005 · best 00009', 'space / tap to retry']);
+});
+
+test('passedRival fires exactly once, on the frame the score crosses it', () => {
+  assert.equal(passedRival(3235, 3236, RIVAL), false);
+  assert.equal(passedRival(3236, 3237, RIVAL), true);
+  assert.equal(passedRival(3237, 3238, RIVAL), false);
+  assert.equal(passedRival(10, 20, null), false);
+});
+
+test('bragText names the score, the rival, and the site', () => {
+  assert.equal(
+    bragText(6012, RIVAL, 'https://chimkenchrls.github.io/my-portfolio/'),
+    "I scored 6012 on chimken and beat ck's 3236 🐔 https://chimkenchrls.github.io/my-portfolio/",
+  );
+});
+
+test('fireworks sparks burst outward, fall, fade, and disappear', () => {
+  let i = 0;
+  const rng = () => { i += 1; return (i * 0.137) % 1; };
+  const sparks = spawnSparks(300, 40, 24, rng);
+  assert.equal(sparks.length, 24);
+  assert.ok(sparks.every((s) => s.x === 300 && s.y === 40 && s.life > 0));
+  assert.ok(new Set(sparks.map((s) => Math.sign(s.vx))).size > 1, 'sparks go both ways');
+  const later = stepSparks(sparks, 0.2);
+  assert.ok(later.every((s, k) => s.life < sparks[k].life));
+  let t = stepSparks(sparks, 0.1);
+  for (let n = 0; n < 40 && t.length; n += 1) t = stepSparks(t, 0.1);
+  assert.equal(t.length, 0, 'all sparks gone within a few seconds');
+});

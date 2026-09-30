@@ -219,10 +219,9 @@ kbd { font: inherit; }
 .main > * { max-width: 880px; margin-inline: auto; }
 
 /* 7. Sidebar ============================================================== */
-.brand { display: flex; flex-direction: column; gap: 4px; }
-.brand-mark { display: none; font-family: var(--font-pixel); font-size: 20px; line-height: 1; }
-.brand-name { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
-.brand-sub { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }
+/* The full sidebar shows no name (the hero has it); the rail keeps a KC mark. */
+.brand { display: none; }
+.brand-mark { font-family: var(--font-pixel); font-size: 20px; line-height: 1; }
 
 .nav { display: flex; flex-direction: column; gap: 6px; }
 .nav-label {
@@ -316,8 +315,8 @@ kbd { font: inherit; }
 /* 8. Rail mode (tablet, or desktop collapsed) — body.is-rail set by JS ===== */
 body.is-rail .sidebar { width: var(--rail-w); padding: 20px 10px; align-items: center; }
 body.is-rail .main { margin-left: var(--rail-w); }
-body.is-rail :is(.brand-name, .brand-sub, .nav-label, .nav-text, .theme-label, .visitors, .sidebar .kbd) { display: none; }
-body.is-rail .brand-mark { display: block; }
+body.is-rail :is(.nav-label, .nav-text, .theme-label, .visitors, .sidebar .kbd) { display: none; }
+body.is-rail .brand { display: block; }
 body.is-rail :is(.nav-link, .game-trigger, .copy-email, .status) { justify-content: center; padding: 10px; }
 body.is-rail .sidebar-controls { flex-direction: column; }
 
@@ -542,8 +541,17 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   color: var(--fg-muted);
 }
 .github-user { font-family: var(--font-mono); font-size: 11px; }
-.github-graph { overflow-x: auto; color: var(--fg); }
-.github-graph svg { display: block; }
+.github-graph { overflow: hidden; color: var(--fg); }
+.github-graph svg { display: block; width: 100%; height: auto; }
+.github-months { position: relative; height: 16px; margin-bottom: 4px; }
+.github-month {
+  position: absolute;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 16px;
+  color: var(--fg-muted);
+}
 .github-dot-empty { opacity: 0.18; }
 .github-total {
   margin-top: 14px;
@@ -656,7 +664,29 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   touch-action: manipulation;
   cursor: pointer;
 }
+/* Game tap targets: no blue mobile tap flash, no text selection on rapid taps. */
+.game-canvas,
+.game-close,
+.topbar-game {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .game-canvas:focus-visible { outline: 1px solid var(--fg-muted); outline-offset: 2px; }
+.game-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.game-foot .game-hint { margin-top: 0; }
+.game-brag {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-radius: var(--radius);
+  -webkit-tap-highlight-color: transparent;
+}
+.game-brag:hover { opacity: 0.88; }
 .game-hint {
   margin-top: 10px;
   font-family: var(--font-mono);
@@ -816,5 +846,6 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .section { padding-bottom: 48px; scroll-margin-top: calc(var(--topbar-h) + 16px); }
   .hero-photo { width: 224px; }
   .stack-grid { grid-template-columns: 1fr; }
+  .github-month:nth-child(even) { display: none; } /* every other month on phones */
   .divider-label { letter-spacing: 0.25em; }
 }

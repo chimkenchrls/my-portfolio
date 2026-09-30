@@ -71,3 +71,11 @@ test('quick jump is replaced by the chimken game', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', 'chimken.svg')));
   assert.doesNotMatch(read('style.css'), /quick-jump/);
 });
+
+test('sidebar no longer shows the full name; rail keeps the KC mark', () => {
+  const html = read('index.html');
+  assert.doesNotMatch(html, /brand-name/);
+  assert.match(html, /<a[^>]*class="brand"[^>]*aria-label="Kenneth Charles Valdez/);
+  assert.match(html, /class="brand-mark"[^>]*>KC</);
+  assert.match(html, /class="topbar-brand"[^>]*>Kenneth Charles</);
+});

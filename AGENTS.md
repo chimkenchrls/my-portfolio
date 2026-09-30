@@ -54,7 +54,7 @@ Visual Style: 1px `var(--border)` dividers; gradient-line section dividers with 
 Motion (all disabled under `prefers-reduced-motion`): one-shot scroll reveal (fade + 16px slide, 60ms stagger); 8×8 pixel-tile photo reveal on hover/focus/tap; circular View Transition ripple on theme toggle.
 
 ## 5. Sections
-Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), "Play chimken" mini game (Alt+K; also a chicken button in the mobile top bar — endless runner in a <dialog>/<canvas>, pure engine tested in tests/chimken.test.js), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
+Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), "Play chimken" mini game (Alt+K; also a chicken button in the mobile top bar — endless runner in a <dialog>/<canvas>, pure engine tested in tests/chimken.test.js; ck's score to beat is `game.highScore` in data.js — beating it unlocks a saved crown, pixel fireworks, and a copy-brag button), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
 Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → footer `© <year> Kenneth Charles`.
 
 ## 6. Agent Rules of Engagement

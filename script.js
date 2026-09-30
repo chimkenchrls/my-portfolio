@@ -81,6 +81,42 @@
     return tag === 'input' || tag === 'textarea' || tag === 'select';
   };
 
+  /* chimken vs ck: the site owner's fixed high score (data.js `game`) is the
+     score to beat. Beating it unlocks a crown, fireworks, and a brag to copy. */
+  const gameOverSummary = (state, rival, crownUnlocked) => {
+    const lines = ['GAME OVER', `score ${padCount(state.score, 5)} · best ${padCount(state.hi, 5)}`];
+    const beat = Boolean(rival) && state.score > rival.highScore;
+    if (rival) {
+      lines.push(beat
+        ? `you beat ${rival.owner}'s high score: ${rival.highScore}${crownUnlocked ? ' · crown unlocked' : ''}`
+        : `you didn't beat ${rival.owner}'s high score: ${rival.highScore}`);
+    }
+    lines.push('space / tap to retry');
+    return { beat, lines };
+  };
+
+  const passedRival = (previousScore, score, rival) => Boolean(rival)
+    && previousScore <= rival.highScore && score > rival.highScore;
+
+  const bragText = (score, rival, url) => `I scored ${score} on chimken and beat ${rival.owner}'s ${rival.highScore} 🐔 ${url}`;
+
+  const SPARK_GRAVITY = 400;
+  const spawnSparks = (x, y, count, random = Math.random) => Array.from({ length: count }, () => {
+    const angle = random() * Math.PI * 2;
+    const speed = 80 + random() * 160;
+    return { x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 60, life: 0.8 + random() * 0.6 };
+  });
+
+  const stepSparks = (sparks, dt) => sparks
+    .map((spark) => ({
+      ...spark,
+      x: spark.x + spark.vx * dt,
+      y: spark.y + spark.vy * dt,
+      vy: spark.vy + SPARK_GRAVITY * dt,
+      life: spark.life - dt,
+    }))
+    .filter((spark) => spark.life > 0);
+
   /* chimken view + sky (pure). The playfield keeps its pixel size: wide
      screens show the full 600px world, phones show a narrower, taller slice
      with the ground pinned to the bottom and extra room for sky. */
@@ -163,6 +199,23 @@
     });
     if (week.length) weeks.push(week);
     return weeks;
+  };
+
+  // Month label per column, GitHub-style: a week is labeled by the month of
+  // its first day. A cramped first label (< 3 weeks wide) is dropped.
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthLabels = (weeks) => {
+    const labels = [];
+    let previous = -1;
+    weeks.forEach((week, col) => {
+      const first = week.find(Boolean);
+      if (!first) return;
+      const month = Number(first.date.slice(5, 7)) - 1;
+      if (month !== previous) labels.push({ col, label: MONTHS[month] });
+      previous = month;
+    });
+    if (labels.length > 1 && labels[1].col - labels[0].col < 3) labels.shift();
+    return labels;
   };
 
   // Dot radius for an activity level (0–4), scaled like react-github-calendar.
@@ -319,16 +372,23 @@
       if (c.link !== undefined && !isOptionalUrl(c.link)) errors.push(`${p}.link: https URL or null`);
     });
     if (!isText(data.certificationsPending)) errors.push('certificationsPending: required text');
+    if (data.game !== undefined && data.game !== null) {
+      const { owner, highScore } = data.game;
+      if (!isText(owner) || !Number.isInteger(highScore) || highScore < 0) {
+        errors.push('game: owner text and a non-negative integer highScore required');
+      }
+    }
     return errors;
   };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       SECTIONS, padCount, safeUrl, computeTiles, revealDelays, joinParts,
-      parseContributions, buildContributionWeeks, dotRadius,
+      parseContributions, buildContributionWeeks, dotRadius, monthLabels,
       isTypingTarget, resolveShortcut, validateData,
       CHIMKEN, createChimkenState, stepChimken, spawnGap,
       chimkenView, buildSky, skyOffset, starAlpha,
+      gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
     };
   }
   if (typeof document === 'undefined') return;
@@ -787,6 +847,7 @@
         '....X....', '.X.....X.', '...XXX...', '..X...X..', 'X.X...X.X',
         '..X...X..', '...XXX...', '.X.....X.', '....X....',
       ],
+      crown: ['X.X.X', 'XXXXX'],
       cloud: ['....XXXX......', '..XX....XX....', '.X........XXX.', 'X.............X', 'XXXXXXXXXXXXXXX'],
       bugLarge: [
         'X.......X', '.X.....X.', '..XXXXX..', '.XX.X.XX.',
@@ -800,6 +861,14 @@
     let shownScore = '';
     let returnFocus = null;
     let view = chimkenView(CHIMKEN.width, CHIMKEN.height);
+    const bragButton = $('.game-brag');
+    const CROWN_KEY = 'chimken-crown';
+    let rival = null;
+    let crowned = false;
+    let newlyCrowned = false;
+    let crownedThisRun = false;
+    let sparks = [];
+    let flashUntil = 0;
     let sky = null;
     let clock = 0;
 
@@ -834,6 +903,14 @@
           if (row[c] === 'X') ctx.fillRect(Math.round(x) + c * PIXEL, Math.round(top) + r * PIXEL, PIXEL, PIXEL);
         }
       });
+    };
+
+    // Faint plate behind a message block so stars don't twinkle through the text.
+    const drawPlate = (top, bottom, width) => {
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = token('--bg');
+      ctx.fillRect(Math.round((view.width - width) / 2), Math.round(top), Math.round(width), Math.round(bottom - top));
+      ctx.globalAlpha = 1;
     };
 
     const drawText = (text, y, font, fill) => {
@@ -905,12 +982,39 @@
       if (!chimken.onGround) sprite = SPRITES.air;
       else if (state.status === 'running' && Math.floor(state.distance / 30) % 2) sprite = SPRITES.runB;
       drawSprite(sprite, CHIMKEN.chimkenX, ground - chimken.y);
+      if (crowned) {
+        const headTop = ground - chimken.y - sprite.length * PIXEL;
+        drawSprite(SPRITES.crown, CHIMKEN.chimkenX + 5 * PIXEL, headTop - 1);
+      }
 
+      sparks.forEach((spark) => {
+        ctx.globalAlpha = Math.min(1, spark.life);
+        ctx.fillRect(Math.round(spark.x), Math.round(spark.y), 2, 2);
+      });
+      ctx.globalAlpha = 1;
+
+      // Messages sit in the middle of the playfield (tall on phones).
+      const mid = Math.min(view.height / 2, ground - 60);
       const mono = '12px "Geist Mono", ui-monospace, monospace';
-      if (state.status === 'ready') drawText('press space or tap to start', ground - 64, mono, muted);
+      const pixel = '18px "Geist Pixel", "Geist Mono", monospace';
+      if (state.status === 'ready') {
+        drawText('press space or tap to start', mid, mono, muted);
+        if (rival) drawText(`beat ${rival.owner}'s high score: ${rival.highScore}`, mid + 20, mono, muted);
+      }
+      if (state.status === 'running' && clock < flashUntil && rival) {
+        drawText(`passed ${rival.owner}!`, mid - 20, '14px "Geist Pixel", "Geist Mono", monospace', fg);
+      }
       if (state.status === 'over') {
-        drawText('GAME OVER', ground - 70, '18px "Geist Pixel", "Geist Mono", monospace', fg);
-        drawText('space / tap to retry', ground - 48, mono, muted);
+        const { beat, lines } = gameOverSummary(state, rival, crownedThisRun);
+        const [title, stats, ...rest] = lines;
+        const hint = rest.pop();
+        ctx.font = mono;
+        const widest = Math.max(...lines.map((text) => ctx.measureText(text).width));
+        drawPlate(mid - 54, mid + 46, Math.min(view.width, widest + 32));
+        drawText(title, mid - 32, pixel, fg);
+        drawText(stats, mid - 8, mono, muted);
+        if (rest.length) drawText(rest[0], mid + 12, mono, beat ? fg : muted);
+        drawText(hint, mid + 36, mono, muted);
       }
 
       const score = `${pad(state.score)}  HI ${pad(state.hi)}`;
@@ -922,11 +1026,30 @@
       last = now;
       clock = now / 1000;
       const wasOver = state.status === 'over';
+      const previousScore = state.score;
       state = stepChimken(state, dt, input);
       input.jump = false;
+      if (wasOver && state.status === 'running') { bragButton.hidden = true; crownedThisRun = false; }
+      if (passedRival(previousScore, state.score, rival)) {
+        sparks = sparks.concat(spawnSparks(view.width / 2, view.height * 0.3, 28));
+        flashUntil = clock + 1.6;
+        if (!crowned) {
+          crowned = true;
+          newlyCrowned = true;
+          storage.set('localStorage', CROWN_KEY, '1');
+        }
+      }
+      sparks = stepSparks(sparks, dt);
       if (!wasOver && state.status === 'over') {
         storage.set('localStorage', HI_KEY, String(state.hi));
-        announce(`Game over. Score ${state.score}. High score ${state.hi}.`);
+        crownedThisRun = newlyCrowned;
+        newlyCrowned = false;
+        const summary = gameOverSummary(state, rival, crownedThisRun);
+        announce(summary.lines.slice(0, -1).join('. '));
+        if (summary.beat) {
+          bragButton.dataset.copy = bragText(state.score, rival, `${window.location.origin}${window.location.pathname}`);
+          bragButton.hidden = false;
+        }
       }
       draw();
       raf = window.requestAnimationFrame(frame);
@@ -948,6 +1071,12 @@
       const saved = Math.floor(Number(storage.get('localStorage', HI_KEY)));
       state = createChimkenState(Number.isFinite(saved) && saved > 0 ? saved : 0);
       shownScore = '';
+      crowned = storage.get('localStorage', CROWN_KEY) === '1';
+      newlyCrowned = false;
+      crownedThisRun = false;
+      sparks = [];
+      flashUntil = 0;
+      bragButton.hidden = true;
       dialog.showModal();
       canvas.focus();
       stop();
@@ -960,7 +1089,11 @@
     const release = () => { input.holding = false; };
     const isJumpKey = (event) => event.key === ' ' || event.key === 'ArrowUp' || event.code === 'Space';
 
-    const init = () => {
+    const init = (data) => {
+      const game = data && data.game;
+      if (game && typeof game.owner === 'string' && Number.isInteger(game.highScore) && game.highScore >= 0) {
+        rival = { owner: game.owner, highScore: game.highScore };
+      }
       const triggers = $$('.game-trigger, .topbar-game');
       if (!dialog || !ctx || typeof dialog.showModal !== 'function') {
         triggers.forEach((button) => { button.hidden = true; });
@@ -1244,7 +1377,8 @@
       const weeks = buildContributionWeeks(days);
       const width = weeks.length * CELL;
       const height = 7 * CELL;
-      const svg = svgEl('svg', { width, height, viewBox: `0 0 ${width} ${height}`, role: 'img' });
+      // Scales to the panel width: the whole year always fits, never scrolls.
+      const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img' });
       svg.setAttribute('aria-label', 'GitHub contribution activity over the last year');
       weeks.forEach((week, col) => {
         week.forEach((d, row) => {
@@ -1262,8 +1396,14 @@
           svg.append(dot);
         });
       });
-      graph.replaceChildren(svg);
-      graph.scrollLeft = graph.scrollWidth; // most recent weeks first on narrow screens
+      const months = el('div', 'github-months');
+      months.setAttribute('aria-hidden', 'true');
+      monthLabels(weeks).forEach(({ col, label }) => {
+        const tag = el('span', 'github-month', label);
+        tag.style.left = `${(col / weeks.length) * 100}%`;
+        months.append(tag);
+      });
+      graph.replaceChildren(months, svg);
     };
 
     const load = async (panel, username) => {
@@ -1318,7 +1458,7 @@
     theme.init();
     layout.init();
     nav.init();
-    game.init();
+    game.init(data);
     keyboard.init();
     clipboard.init();
     pixelPhoto.init();

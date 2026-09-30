@@ -177,3 +177,29 @@ test('dotRadius grows with activity level like the React calendar', () => {
   assert.ok(dotRadius(2, 10) > dotRadius(1, 10));
   assert.equal(dotRadius(9, 10), 5);
 });
+
+test('monthLabels marks the first week of each month, skipping a cramped first label', () => {
+  const { monthLabels, buildContributionWeeks } = require('../script.js');
+  const days = [];
+  const start = Date.UTC(2025, 8, 28); // Sun 2025-09-28
+  for (let i = 0; i < 77; i += 1) { // through Sat 2025-12-13
+    days.push({ date: new Date(start + i * 86400000).toISOString().slice(0, 10), count: 0, level: 0 });
+  }
+  const labels = monthLabels(buildContributionWeeks(days));
+  // Sep only has week 0 before Oct starts in week 1 -> the Sep label is too cramped and dropped.
+  assert.deepEqual(labels, [
+    { col: 1, label: 'Oct' },
+    { col: 5, label: 'Nov' },
+    { col: 10, label: 'Dec' },
+  ]);
+});
+
+test('monthLabels keeps a first label that has room', () => {
+  const { monthLabels, buildContributionWeeks } = require('../script.js');
+  const days = [];
+  const start = Date.UTC(2026, 0, 4); // Sun 2026-01-04
+  for (let i = 0; i < 40; i += 1) {
+    days.push({ date: new Date(start + i * 86400000).toISOString().slice(0, 10), count: 0, level: 0 });
+  }
+  assert.deepEqual(monthLabels(buildContributionWeeks(days)).map((l) => l.label), ['Jan', 'Feb']);
+});

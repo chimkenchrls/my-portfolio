@@ -50,3 +50,16 @@ test('the real data passes validateData', () => {
   const { validateData } = require('../script.js');
   assert.deepEqual(validateData(data), []);
 });
+
+test("data.js sets ck's chimken high score", () => {
+  const data = require('../assets/data.js');
+  assert.deepEqual(data.game, { owner: 'ck', highScore: 3236 });
+});
+
+test('validateData rejects a bad game entry', () => {
+  const { validateData } = require('../script.js');
+  const data = JSON.parse(JSON.stringify(require('../assets/data.js')));
+  data.game = { owner: '', highScore: -3 };
+  const errors = validateData(data);
+  assert.ok(errors.some((e) => e.startsWith('game')), errors.join(' | '));
+});

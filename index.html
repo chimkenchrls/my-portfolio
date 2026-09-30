@@ -70,9 +70,8 @@
     <div class="backdrop" hidden></div>
 
     <aside class="sidebar" id="sidebar" aria-label="Sidebar">
-      <a class="brand" href="#home">
+      <a class="brand" href="#home" aria-label="Kenneth Charles Valdez — home">
         <span class="brand-mark" aria-hidden="true">KC</span>
-        <span class="brand-name">Kenneth Charles Valdez</span>
       </a>
 
       <nav class="nav" aria-label="Sections">
@@ -337,7 +336,12 @@
         role="img"
         aria-label="chimken: a running chicken jumping over bugs. Press space, up arrow, or tap to jump."
       ></canvas>
-      <p class="game-hint">space / ↑ / tap to jump · esc to close</p>
+      <div class="game-foot">
+        <p class="game-hint">space / ↑ / tap to jump · esc to close</p>
+        <button class="game-brag" type="button" hidden>
+          <span data-copy-label>copy brag</span>
+        </button>
+      </div>
     </dialog>
 
     <div class="toast" hidden>
