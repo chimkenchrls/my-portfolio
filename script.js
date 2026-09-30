@@ -170,5 +170,242 @@
   }
   if (typeof document === 'undefined') return;
 
-  /* DOM modules are added below in Tasks 4–6. */
+  /* ==========================================================================
+     2. DOM environment
+     ========================================================================== */
+
+  const root = document.documentElement;
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const prefersReducedMotion = () => motionQuery.matches;
+  const $ = (selector, scope = document) => scope.querySelector(selector);
+  const $$ = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
+
+  const storage = {
+    get(area, key) {
+      try { return window[area].getItem(key); } catch { return null; }
+    },
+    set(area, key, value) {
+      try { window[area].setItem(key, value); } catch { /* storage blocked — keep going */ }
+    },
+  };
+
+  const el = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  };
+
+  const iconEl = (name, extraClass = '') => {
+    const span = el('span', `icon icon-${name}${extraClass ? ` ${extraClass}` : ''}`);
+    span.setAttribute('aria-hidden', 'true');
+    return span;
+  };
+
+  const stackIconEl = (slug) => {
+    const span = el('span', 'icon icon-sm');
+    span.setAttribute('aria-hidden', 'true');
+    span.style.setProperty('--icon', `url("./assets/icons/stack/${slug}.svg")`);
+    return span;
+  };
+
+  const externalLink = (href, text, className = 'text-link') => {
+    const a = el('a', className, text);
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    return a;
+  };
+
+  const announce = (message) => {
+    const region = $('.sr-status');
+    if (!region) return;
+    region.textContent = '';
+    window.setTimeout(() => { region.textContent = message; }, 50);
+  };
+
+  /* ==========================================================================
+     3. Render — builds list sections from PORTFOLIO_DATA
+     ========================================================================== */
+
+  const render = (() => {
+    const pendingEl = (tag, text) => el(tag, 'pending', text);
+
+    const social = ({ profile = {} }) => {
+      const parts = [];
+      const github = safeUrl(profile.github);
+      if (github) parts.push(externalLink(github, 'github', ''));
+
+      const linkedin = safeUrl(profile.linkedin);
+      if (linkedin) {
+        parts.push(externalLink(linkedin, 'linkedin', ''));
+      } else {
+        const pending = el('span', 'social-pending', 'linkedin');
+        pending.title = 'coming soon';
+        pending.append(el('span', 'visually-hidden', ' (coming soon)'));
+        parts.push(pending);
+      }
+
+      if (profile.discord) {
+        const button = el('button', 'social-copy');
+        button.type = 'button';
+        button.dataset.copy = profile.discord;
+        button.setAttribute('aria-label', `Copy Discord username ${profile.discord}`);
+        const label = el('span', null, 'discord');
+        label.setAttribute('data-copy-label', '');
+        button.append(label);
+        parts.push(button);
+      }
+
+      return parts.flatMap((node, i) => {
+        if (i === 0) return [node];
+        const sep = el('span', 'social-sep', '/');
+        sep.setAttribute('aria-hidden', 'true');
+        return [sep, node];
+      });
+    };
+
+    const stats = ({ stats: items = [] }) => items.map(({ value, label }) => {
+      const group = el('div', 'stat');
+      group.append(el('dt', 'stat-value', value), el('dd', 'stat-label', label));
+      return group;
+    });
+
+    const highlights = ({ highlights: items = [] }) => items.map(({ icon, label }) => {
+      const li = el('li', 'chip');
+      const badge = el('span', 'chip-icon');
+      badge.append(iconEl(icon, 'icon-sm'));
+      li.append(badge, el('span', null, label));
+      return li;
+    });
+
+    const rowHead = (title, meta, current) => {
+      const head = el('div', 'row-head');
+      const titleEl = el('p', 'row-title');
+      if (current) {
+        const dot = el('span', 'live-dot');
+        dot.title = 'current';
+        titleEl.append(dot);
+      }
+      titleEl.append(document.createTextNode(title));
+      head.append(titleEl, el('span', 'row-meta', meta));
+      return head;
+    };
+
+    const experience = ({ experience: items = [] }) => items.map((item) => {
+      const li = el('li');
+      li.append(rowHead(item.title, item.dates, item.current), el('p', 'row-sub', item.org));
+      const bullets = (item.bullets || []).filter(Boolean);
+      if (bullets.length) {
+        const ul = el('ul', 'row-bullets');
+        bullets.forEach((text) => ul.append(el('li', null, text)));
+        li.append(ul);
+      }
+      return li;
+    });
+
+    const education = ({ education: items = [] }) => items.map((item) => {
+      const li = el('li');
+      li.append(rowHead(item.school, item.dates, item.current), el('p', 'row-sub', item.degree));
+      return li;
+    });
+
+    const stack = ({ stack: groups = [] }) => groups.map((group) => {
+      const box = el('div', 'stack-group');
+      const list = el('ul', 'stack-items');
+      (group.items || []).forEach((item) => {
+        const li = el('li', 'stack-item');
+        if (item.icon) li.append(stackIconEl(item.icon));
+        li.append(el('span', null, item.name));
+        list.append(li);
+      });
+      box.append(el('h3', 'stack-group-title', group.category), list);
+      return box;
+    });
+
+    const projects = ({ projects: items = [] }) => items.map((project) => {
+      const li = el('li', 'project');
+      const head = el('div', 'project-head');
+      const metaClass = project.status === 'done' ? 'project-meta' : 'badge';
+      head.append(el('h3', 'project-title', project.title), el('span', metaClass, project.meta));
+      li.append(head);
+
+      li.append(project.description
+        ? el('p', 'project-desc', project.description)
+        : pendingEl('p', 'Details coming soon.'));
+
+      const tags = (project.tags || []).filter(Boolean);
+      if (tags.length) {
+        const ul = el('ul', 'tags');
+        ul.setAttribute('aria-label', 'Technologies');
+        tags.forEach((tag) => ul.append(el('li', 'tag', tag)));
+        li.append(ul);
+      }
+
+      const links = project.links || {};
+      const source = safeUrl(links.source);
+      const live = safeUrl(links.live);
+      if (source || live) {
+        const row = el('p', 'project-links');
+        if (source) row.append(externalLink(source, 'source ↗'));
+        if (live) row.append(externalLink(live, 'live ↗'));
+        li.append(row);
+      }
+      return li;
+    });
+
+    const certifications = ({ certifications: items = [], certificationsPending }) => {
+      if (!items.length) return [pendingEl('li', certificationsPending || 'Coming soon.')];
+      return items.map((cert) => {
+        const li = el('li');
+        li.append(rowHead(cert.title, `${cert.issuer} · ${cert.date}`, false));
+        const link = safeUrl(cert.link);
+        if (link) li.append(externalLink(link, 'view credential ↗', 'text-link row-link'));
+        return li;
+      });
+    };
+
+    const renderers = { social, stats, highlights, experience, education, stack, projects, certifications };
+
+    const showLoadError = (container) => {
+      if (container.dataset.render === 'social') return; // static github link stays
+      if (container.tagName === 'DL') { container.hidden = true; return; }
+      const tag = container.tagName === 'UL' || container.tagName === 'OL' ? 'li' : 'p';
+      container.replaceChildren(pendingEl(tag, 'Content failed to load.'));
+    };
+
+    const init = (data) => {
+      const containers = $$('[data-render]');
+      const errors = validateData(data);
+      if (errors.length) console.warn('[portfolio] data.js problems:', errors);
+      if (!data) { containers.forEach(showLoadError); return; }
+      containers.forEach((container) => {
+        const build = renderers[container.dataset.render];
+        if (!build) return;
+        try {
+          container.replaceChildren(...build(data));
+        } catch (error) {
+          console.error(`[portfolio] failed to render ${container.dataset.render}`, error);
+          showLoadError(container);
+        }
+      });
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
+     99. Boot
+     ========================================================================== */
+
+  const init = () => {
+    const data = typeof PORTFOLIO_DATA !== 'undefined' ? PORTFOLIO_DATA : null;
+    render.init(data);
+    /* module inits (Tasks 5–6) go here */
+    const year = $('.footer-year');
+    if (year) year.textContent = String(new Date().getFullYear());
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
