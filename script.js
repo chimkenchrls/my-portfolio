@@ -81,6 +81,44 @@
     return tag === 'input' || tag === 'textarea' || tag === 'select';
   };
 
+  /* chimken view + sky (pure). The playfield keeps its pixel size: wide
+     screens show the full 600px world, phones show a narrower, taller slice
+     with the ground pinned to the bottom and extra room for sky. */
+  const chimkenView = (cssWidth, cssHeight) => {
+    const scale = Math.max(1, cssWidth / CHIMKEN.width);
+    const width = cssWidth / scale;
+    const height = cssHeight / scale;
+    return { scale, width, height, groundY: height - (CHIMKEN.height - CHIMKEN.groundY) };
+  };
+
+  const buildSky = (width, groundY, random = Math.random) => {
+    const skyBottom = groundY - 36;
+    const count = Math.max(8, Math.round((width * skyBottom) / 1800));
+    const stars = Array.from({ length: count }, () => ({
+      x: Math.floor(random() * width),
+      y: 6 + Math.floor(random() * (skyBottom - 6)),
+      size: random() < 0.2 ? 4 : 2,
+      phase: random() * Math.PI * 2,
+    }));
+    const bodyY = 6 + Math.floor((skyBottom - 6) * 0.15);
+    const clouds = Array.from({ length: Math.max(2, Math.round(width / 200)) }, () => ({
+      x: Math.floor(random() * width),
+      y: 10 + Math.floor(random() * Math.max(1, skyBottom - 30)),
+    }));
+    return {
+      width, groundY, stars, clouds,
+      moon: { x: Math.round(width * 0.72), y: bodyY },
+      sun: { x: Math.round(width * 0.72), y: bodyY },
+    };
+  };
+
+  // Parallax: a layer moves `factor` as fast as the ground, wrapping at `wrap`.
+  const skyOffset = (distance, factor, wrap) => (((distance * factor) % wrap) + wrap) % wrap;
+
+  const starAlpha = (phase, t, reduced) => (reduced
+    ? 0.55
+    : 0.3 + 0.45 * (0.5 + 0.5 * Math.sin(t * 1.6 + phase)));
+
   const resolveShortcut = (event, typing = false) => {
     const key = String(event.key || '');
     if (key === 'Escape') return { type: 'close' };
@@ -290,6 +328,7 @@
       parseContributions, buildContributionWeeks, dotRadius,
       isTypingTarget, resolveShortcut, validateData,
       CHIMKEN, createChimkenState, stepChimken, spawnGap,
+      chimkenView, buildSky, skyOffset, starAlpha,
     };
   }
   if (typeof document === 'undefined') return;
@@ -740,6 +779,15 @@
         '.XXXXXXXXX..', '..XXXXXXX...', '...XX.XX....', '............',
       ],
       bugSmall: ['X.....X', '.X...X.', '..XXX..', '.XXXXX.', 'XXXXXXX', '.X.X.X.'],
+      moon: [
+        '..XXXX...', '.XXX.....', 'XXX......', 'XX.......', 'XX.......',
+        'XX.......', 'XXX......', '.XXX.....', '..XXXX...',
+      ],
+      sun: [
+        '....X....', '.X.....X.', '...XXX...', '..X...X..', 'X.X...X.X',
+        '..X...X..', '...XXX...', '.X.....X.', '....X....',
+      ],
+      cloud: ['....XXXX......', '..XX....XX....', '.X........XXX.', 'X.............X', 'XXXXXXXXXXXXXXX'],
       bugLarge: [
         'X.......X', '.X.....X.', '..XXXXX..', '.XX.X.XX.',
         'XXXXXXXXX', 'XXX.X.XXX', '.XXXXXXX.', 'X.X.X.X.X',
@@ -751,16 +799,32 @@
     let last = 0;
     let shownScore = '';
     let returnFocus = null;
+    let view = chimkenView(CHIMKEN.width, CHIMKEN.height);
+    let sky = null;
+    let clock = 0;
 
     const pad = (n) => String(n).padStart(5, '0');
     const token = (name) => getComputedStyle(root).getPropertyValue(name).trim();
 
+    // Same seed every time so the sky layout is stable between opens.
+    const seededRandom = (seed) => () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
     const fitCanvas = () => {
       const ratio = window.devicePixelRatio || 1;
-      const w = Math.max(1, Math.round(canvas.clientWidth * ratio));
-      const h = Math.max(1, Math.round(canvas.clientHeight * ratio));
+      const cssWidth = canvas.clientWidth || CHIMKEN.width;
+      const cssHeight = canvas.clientHeight || CHIMKEN.height;
+      const w = Math.max(1, Math.round(cssWidth * ratio));
+      const h = Math.max(1, Math.round(cssHeight * ratio));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
-      ctx.setTransform(w / CHIMKEN.width, 0, 0, h / CHIMKEN.height, 0, 0);
+      view = chimkenView(cssWidth, cssHeight);
+      if (!sky || sky.width !== view.width || sky.groundY !== view.groundY) {
+        sky = buildSky(view.width, view.groundY, seededRandom(7));
+      }
+      const unit = (w / cssWidth) * view.scale;
+      ctx.setTransform(unit, 0, 0, unit, 0, 0);
     };
 
     const drawSprite = (rows, x, bottom) => {
@@ -776,20 +840,55 @@
       ctx.font = font;
       ctx.fillStyle = fill;
       ctx.textAlign = 'center';
-      ctx.fillText(text, CHIMKEN.width / 2, y);
+      ctx.fillText(text, view.width / 2, y);
+    };
+
+    // Wraps a drifting x back to the right edge once it leaves on the left.
+    const drift = (x, factor, travel, margin) => {
+      const span = view.width + margin * 2;
+      return ((((x + margin - travel * factor) % span) + span) % span) - margin;
+    };
+
+    const drawSky = (fg, muted) => {
+      const dark = root.getAttribute('data-theme') === 'dark';
+      const reduced = prefersReducedMotion();
+      const travel = reduced ? 0 : state.distance;
+      const bottomOf = (body, rows) => body.y + rows.length * PIXEL;
+      if (dark) {
+        ctx.fillStyle = fg;
+        const shift = skyOffset(travel, 0.08, view.width);
+        sky.stars.forEach((star) => {
+          ctx.globalAlpha = starAlpha(star.phase, clock, reduced);
+          const x = (star.x - shift + view.width) % view.width;
+          ctx.fillRect(Math.round(x), star.y, star.size, star.size);
+        });
+        ctx.globalAlpha = 0.85;
+        drawSprite(SPRITES.moon, drift(sky.moon.x, 0.02, travel, 30), bottomOf(sky.moon, SPRITES.moon));
+      } else {
+        ctx.fillStyle = muted;
+        ctx.globalAlpha = 0.5;
+        drawSprite(SPRITES.sun, drift(sky.sun.x, 0.02, travel, 30), bottomOf(sky.sun, SPRITES.sun));
+        ctx.globalAlpha = 0.35;
+        sky.clouds.forEach((cloud) => {
+          drawSprite(SPRITES.cloud, drift(cloud.x, 0.25, travel, 40), bottomOf(cloud, SPRITES.cloud));
+        });
+      }
+      ctx.globalAlpha = 1;
     };
 
     const draw = () => {
       fitCanvas();
       const fg = token('--fg');
       const muted = token('--fg-muted');
-      const ground = CHIMKEN.groundY;
-      ctx.clearRect(0, 0, CHIMKEN.width, CHIMKEN.height);
+      const ground = view.groundY;
+      ctx.clearRect(0, 0, view.width, view.height);
+
+      drawSky(fg, muted);
 
       ctx.fillStyle = muted;
-      ctx.fillRect(0, ground, CHIMKEN.width, 1);
+      ctx.fillRect(0, ground, view.width, 1);
       const offset = state.distance % 12;
-      for (let x = -offset; x < CHIMKEN.width; x += 12) ctx.fillRect(x, ground + 5, 2, 1);
+      for (let x = -offset; x < view.width; x += 12) ctx.fillRect(x, ground + 5, 2, 1);
 
       ctx.fillStyle = fg;
       state.obstacles.forEach((bug) => {
@@ -808,10 +907,10 @@
       drawSprite(sprite, CHIMKEN.chimkenX, ground - chimken.y);
 
       const mono = '12px "Geist Mono", ui-monospace, monospace';
-      if (state.status === 'ready') drawText('press space or tap to start', 64, mono, muted);
+      if (state.status === 'ready') drawText('press space or tap to start', ground - 64, mono, muted);
       if (state.status === 'over') {
-        drawText('GAME OVER', 58, '18px "Geist Pixel", "Geist Mono", monospace', fg);
-        drawText('space / tap to retry', 80, mono, muted);
+        drawText('GAME OVER', ground - 70, '18px "Geist Pixel", "Geist Mono", monospace', fg);
+        drawText('space / tap to retry', ground - 48, mono, muted);
       }
 
       const score = `${pad(state.score)}  HI ${pad(state.hi)}`;
@@ -821,6 +920,7 @@
     const frame = (now) => {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
+      clock = now / 1000;
       const wasOver = state.status === 'over';
       state = stepChimken(state, dt, input);
       input.jump = false;

@@ -128,3 +128,53 @@ test('restart needs a short cooldown and keeps the high score', () => {
   assert.equal(restarted.hi, 77);
   assert.deepEqual(restarted.obstacles, []);
 });
+
+const { chimkenView, buildSky, skyOffset, starAlpha } = require('../script.js');
+
+test('desktop view keeps the 600x150 playfield', () => {
+  const v = chimkenView(606, 151.5);
+  assert.ok(Math.abs(v.width - 600) < 0.01 && Math.abs(v.height - 150) < 0.01, JSON.stringify(v));
+  assert.ok(Math.abs(v.groundY - CHIMKEN.groundY) < 0.01);
+});
+
+test('phone view keeps pixel size, shows more sky, ground stays at the bottom', () => {
+  const v = chimkenView(343, 640);
+  assert.equal(v.scale, 1);
+  assert.equal(v.width, 343);
+  assert.equal(v.height, 640);
+  assert.equal(v.groundY, 640 - (CHIMKEN.height - CHIMKEN.groundY));
+});
+
+test('sky fills the space above the ground, deterministically', () => {
+  let seed = 3;
+  const rng = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const small = buildSky(600, CHIMKEN.groundY, rng);
+  seed = 3;
+  const again = buildSky(600, CHIMKEN.groundY, rng);
+  assert.deepEqual(small, again);
+  const tall = buildSky(343, 618, () => 0.5);
+  assert.ok(tall.stars.length > small.stars.length, 'taller sky has more stars');
+  for (const sky of [small, tall]) {
+    for (const star of sky.stars) {
+      assert.ok(star.x >= 0 && star.x < sky.width && star.y >= 6 && star.y <= sky.groundY - 36, JSON.stringify(star));
+    }
+    for (const body of [sky.moon, sky.sun]) assert.ok(body.y >= 6 && body.y < sky.groundY - 36);
+    assert.ok(sky.clouds.length >= 2);
+  }
+});
+
+test('parallax offsets wrap into the layer width', () => {
+  assert.equal(skyOffset(0, 0.1, 600), 0);
+  assert.equal(skyOffset(1000, 0.1, 600), 100);
+  assert.equal(skyOffset(7000, 0.1, 600), 100);
+  const o = skyOffset(123456, 0.25, 343);
+  assert.ok(o >= 0 && o < 343);
+});
+
+test('stars twinkle within a gentle range, and hold still with reduced motion', () => {
+  for (let t = 0; t < 10; t += 0.37) {
+    const a = starAlpha(1.3, t, false);
+    assert.ok(a >= 0.3 && a <= 0.75, String(a));
+  }
+  assert.equal(starAlpha(1.3, 0, true), starAlpha(0.2, 9, true));
+});
