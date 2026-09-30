@@ -61,6 +61,9 @@ jobs:
           mkdir _site
           cp -r index.html style.css script.js assets _site/
 
+      - name: Cache-bust CSS/JS with the commit SHA
+        run: bash .github/scripts/cache-bust.sh _site "${GITHUB_SHA::7}"
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
