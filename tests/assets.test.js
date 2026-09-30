@@ -72,10 +72,21 @@ test('quick jump is replaced by the chimken game', () => {
   assert.doesNotMatch(read('style.css'), /quick-jump/);
 });
 
-test('sidebar no longer shows the full name; rail keeps the KC mark', () => {
+test('sidebar shows the full name on desktop; rail keeps the KC mark', () => {
   const html = read('index.html');
-  assert.doesNotMatch(html, /brand-name/);
+  assert.match(html, /class="brand-name"[^>]*>Kenneth Charles Valdez</);
   assert.match(html, /<a[^>]*class="brand"[^>]*aria-label="Kenneth Charles Valdez/);
   assert.match(html, /class="brand-mark"[^>]*>KC</);
   assert.match(html, /class="topbar-brand"[^>]*>Kenneth Charles</);
+});
+
+test('"Outside the IDE" is the last section before the footer and is not in the nav', () => {
+  const html = read('index.html');
+  const outside = html.indexOf('id="outside"');
+  assert.ok(outside > html.indexOf('id="certifications"'), 'after certifications');
+  assert.ok(outside < html.indexOf('<footer'), 'before the footer');
+  assert.match(html, /Outside the IDE/);
+  assert.doesNotMatch(html, /href="#outside"/);
+  assert.match(html, /data-render="outside"/);
+  assert.doesNotMatch(html, /deck-caption/, 'no per-photo caption');
 });

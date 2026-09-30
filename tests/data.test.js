@@ -63,3 +63,61 @@ test('validateData rejects a bad game entry', () => {
   const errors = validateData(data);
   assert.ok(errors.some((e) => e.startsWith('game')), errors.join(' | '));
 });
+
+test('outside-the-IDE photos have files on disk, no per-photo captions, one section description', () => {
+  const data = require('../assets/data.js');
+  assert.ok(Array.isArray(data.outside) && data.outside.length >= 3);
+  for (const item of data.outside) {
+    assert.match(item.photo, /^\.\/assets\/outside\/[\w.-]+\.(svg|jpe?g|png|webp)$/);
+    assert.ok(fs.existsSync(path.join(ROOT, item.photo)), `${item.photo} missing`);
+    assert.ok(!('caption' in item), 'captions were dropped');
+  }
+  assert.equal(data.outsideIntro, 'Life away from the terminal — the places, people, and little moments that recharge me between builds.');
+});
+
+test('validateData rejects bad outside entries', () => {
+  const { validateData } = require('../script.js');
+  const data = JSON.parse(JSON.stringify(require('../assets/data.js')));
+  data.outside = [{ photo: 'https://evil.example/x.jpg' }];
+  const errors = validateData(data);
+  assert.ok(errors.some((e) => e.startsWith('outside[0]')), errors.join(' | '));
+});
+
+test('outside photos are real, web-sized, and carry no EXIF/GPS metadata', () => {
+  const data = require('../assets/data.js');
+  assert.equal(data.outside.length, 8);
+  for (const { photo } of data.outside) {
+    assert.doesNotMatch(photo, /placeholder/, 'placeholders replaced');
+    assert.match(photo, /\.jpg$/);
+    const bytes = fs.readFileSync(path.join(ROOT, photo));
+    assert.ok(bytes.length < 200 * 1024, `${photo} is ${Math.round(bytes.length / 1024)} KB`);
+    assert.equal(bytes.indexOf(Buffer.from('Exif\0\0')), -1, `${photo} still has EXIF metadata`);
+  }
+});
+
+test('no raw originals or archives are left inside the site', () => {
+  const left = fs.readdirSync(path.join(ROOT, 'assets', 'outside'))
+    .filter((f) => /\.(heic|mov|zip|png|jpeg)$/i.test(f) || /placeholder/.test(f) || fs.statSync(path.join(ROOT, 'assets', 'outside', f)).isDirectory());
+  assert.deepEqual(left, []);
+});
+
+test('the Live Photo card has a small, silent, metadata-free looping video', () => {
+  const data = require('../assets/data.js');
+  const live = data.outside[0];
+  assert.equal(live.photo, './assets/outside/outside-1.jpg');
+  assert.equal(live.video, './assets/outside/outside-1.mp4');
+  const bytes = fs.readFileSync(path.join(ROOT, live.video));
+  assert.ok(bytes.length < 1024 * 1024, `video is ${Math.round(bytes.length / 1024)} KB`);
+  for (const marker of ['com.apple.quicktime', 'iPhone']) {
+    assert.equal(bytes.indexOf(Buffer.from(marker)), -1, `video still contains "${marker}" metadata`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, live.video.replace(/\.mp4$/, '.webm'))), 'webm fallback missing');
+  assert.ok(data.outside.slice(1).every((item) => !('video' in item)));
+});
+
+test('validateData only accepts local mp4/webm videos', () => {
+  const { validateData } = require('../script.js');
+  const data = JSON.parse(JSON.stringify(require('../assets/data.js')));
+  data.outside[0].video = './assets/outside/clip.mov';
+  assert.ok(validateData(data).some((e) => e.startsWith('outside[0].video')));
+});

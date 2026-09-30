@@ -219,9 +219,11 @@ kbd { font: inherit; }
 .main > * { max-width: 880px; margin-inline: auto; }
 
 /* 7. Sidebar ============================================================== */
-/* The full sidebar shows no name (the hero has it); the rail keeps a KC mark. */
-.brand { display: none; }
-.brand-mark { font-family: var(--font-pixel); font-size: 20px; line-height: 1; }
+/* Full desktop sidebar shows the name; the rail shows a KC mark; the mobile
+   drawer shows neither (the top bar already has the name). */
+.brand { display: block; }
+.brand-mark { display: none; font-family: var(--font-pixel); font-size: 20px; line-height: 1; }
+.brand-name { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; }
 
 .nav { display: flex; flex-direction: column; gap: 6px; }
 .nav-label {
@@ -316,7 +318,8 @@ kbd { font: inherit; }
 body.is-rail .sidebar { width: var(--rail-w); padding: 20px 10px; align-items: center; }
 body.is-rail .main { margin-left: var(--rail-w); }
 body.is-rail :is(.nav-label, .nav-text, .theme-label, .visitors, .sidebar .kbd) { display: none; }
-body.is-rail .brand { display: block; }
+body.is-rail .brand-mark { display: block; }
+body.is-rail .brand-name { display: none; }
 body.is-rail :is(.nav-link, .game-trigger, .copy-email, .status) { justify-content: center; padding: 10px; }
 body.is-rail .sidebar-controls { flex-direction: column; }
 
@@ -599,6 +602,62 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 }
 .project-links { display: flex; gap: 16px; margin-top: 12px; font-family: var(--font-mono); font-size: 12px; }
 
+/* Outside the IDE — intro beside a stacked photo deck */
+/* overflow-x: clip keeps tilted and sliding cards from widening the page. */
+.outside { display: grid; grid-template-columns: 1fr minmax(0, 360px); gap: 48px; align-items: center; overflow-x: clip; overflow-y: visible; padding: 12px 28px; }
+.outside-text { display: flex; flex-direction: column; gap: 20px; }
+.outside-intro { max-width: 46ch; font-size: 16px; }
+.outside-now { padding-top: 14px; border-top: 1px solid var(--border); }
+.deck-count,
+.deck-hint { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }
+.deck-count { margin-top: 4px; font-variant-numeric: tabular-nums; }
+@media (hover: none) { .hint-keys { display: none; } }
+.deck {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  margin-bottom: 20px;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.deck:focus-visible { outline: 1px solid var(--fg-muted); outline-offset: 8px; border-radius: var(--radius); }
+.deck-cards { position: absolute; inset: 0; }
+.deck-card {
+  position: absolute;
+  inset: 0;
+  padding: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  transform-origin: 50% 100%;
+  transition: transform 320ms var(--ease), opacity 320ms ease;
+}
+.deck-card img,
+.deck-card video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+  filter: grayscale(1) contrast(1.05);
+  transition: filter 250ms ease;
+  pointer-events: none;
+}
+.deck.is-color .deck-card img,
+.deck.is-color .deck-card video { filter: none; }
+.deck-card.is-leaving { transform: translateX(115%) rotate(14deg) !important; opacity: 0 !important; }
+.deck-card.is-leaving-back { transform: translateX(-115%) rotate(-14deg) !important; opacity: 0 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .deck-card,
+  .deck-card img,
+  .deck-card video { transition: none; }
+}
+
 /* 16. Pending ("coming soon") states ====================================== */
 .pending {
   margin-top: 10px;
@@ -777,6 +836,8 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .main { padding: 40px 32px 28px; }
   .hero-photo { width: 256px; }
   .about-grid { grid-template-columns: 1fr; }
+  .outside { grid-template-columns: 1fr; gap: 28px; }
+  .deck { width: min(300px, 84%); margin-inline: auto; }
 }
 
 @media (max-width: 860px) {
@@ -837,6 +898,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 
   .backdrop { position: fixed; inset: var(--topbar-h) 0 0 0; z-index: 25; display: block; background: rgba(0, 0, 0, 0.4); }
   body.drawer-open { overflow: hidden; }
+  .sidebar .brand { display: none; }
 
   /* chimken on phones: a centered card with a taller playfield for more sky. */
   .game { width: calc(100vw - 24px); margin: auto; padding: 12px; }

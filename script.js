@@ -21,6 +21,8 @@
 
   const PROJECT_STATUSES = ['done', 'in-progress', 'coming-soon'];
 
+  const safeLocalVideo = (src) => typeof src === 'string' && /^\.\/assets\/outside\/[\w.-]+\.mp4$/.test(src);
+
   const padCount = (value, width = 4) => {
     if (typeof value !== 'number' && typeof value !== 'string') return null;
     if (typeof value === 'string' && value.trim() === '') return null;
@@ -79,6 +81,22 @@
     if (el.isContentEditable) return true;
     const tag = String(el.tagName || '').toLowerCase();
     return tag === 'input' || tag === 'textarea' || tag === 'select';
+  };
+
+  /* Outside-the-IDE photo deck (pure). Cards are a stacked pile: the current
+     card is on top and straight, the next two peek out tilted below it. */
+  const cardDepth = (i, index, count) => (i - index + count) % count;
+  const deckStep = (index, count, direction) => (index + direction + count) % count;
+  const cardTilt = (i) => ((i * 7 + 3) % 11) - 5;
+  const cardStyle = (depth, i) => (depth === 0
+    ? { rotate: 0, y: 0, scale: 1, z: 100, visible: true }
+    : { rotate: cardTilt(i), y: depth * 10, scale: 1 - depth * 0.04, z: 100 - depth, visible: depth <= 2 });
+
+  // A pointer gesture: small movement = tap, long horizontal = swipe, else ignore (scroll).
+  const gestureAction = (dx, dy) => {
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return 'tap';
+    if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'next' : 'prev';
+    return null;
   };
 
   /* chimken vs ck: the site owner's fixed high score (data.js `game`) is the
@@ -372,6 +390,17 @@
       if (c.link !== undefined && !isOptionalUrl(c.link)) errors.push(`${p}.link: https URL or null`);
     });
     if (!isText(data.certificationsPending)) errors.push('certificationsPending: required text');
+    if (data.outsideIntro !== undefined && !isText(data.outsideIntro)) errors.push('outsideIntro: text');
+    if (data.outside !== undefined) {
+      checkList('outside', data.outside, (item, p) => {
+        if (!/^\.\/assets\/outside\/[\w.-]+\.(svg|jpe?g|png|webp)$/.test(String(item.photo))) {
+          errors.push(`${p}.photo: a file in ./assets/outside/`);
+        }
+        if (item.video !== undefined && !/^\.\/assets\/outside\/[\w.-]+\.mp4$/.test(String(item.video))) {
+          errors.push(`${p}.video: an .mp4 in ./assets/outside/ (with a same-named .webm)`);
+        }
+      });
+    }
     if (data.game !== undefined && data.game !== null) {
       const { owner, highScore } = data.game;
       if (!isText(owner) || !Number.isInteger(highScore) || highScore < 0) {
@@ -389,6 +418,7 @@
       CHIMKEN, createChimkenState, stepChimken, spawnGap,
       chimkenView, buildSky, skyOffset, starAlpha,
       gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
+      cardDepth, deckStep, cardTilt, cardStyle, gestureAction,
     };
   }
   if (typeof document === 'undefined') return;
@@ -582,7 +612,40 @@
       });
     };
 
-    const renderers = { social, highlights, experience, education, stack, projects, certifications };
+    // A card with `video` is a Live Photo: a silent looping clip with the still as poster.
+    const liveVideo = (item) => {
+      const video = el('video');
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.preload = 'none';
+      video.poster = item.photo;
+      video.disablePictureInPicture = true;
+      ['muted', 'loop', 'playsinline'].forEach((attr) => video.setAttribute(attr, ''));
+      video.setAttribute('aria-hidden', 'true');
+      [[item.video, 'video/mp4'], [item.video.replace(/\.mp4$/, '.webm'), 'video/webm']].forEach(([src, type]) => {
+        const source = el('source');
+        source.src = src;
+        source.type = type;
+        video.append(source);
+      });
+      return video;
+    };
+
+    const outside = ({ outside: items = [] }) => items.map((item) => {
+      const li = el('li', 'deck-card');
+      if (safeLocalVideo(item.video)) { li.append(liveVideo(item)); return li; }
+      const img = el('img');
+      img.src = item.photo;
+      img.alt = ''; // decorative: the section description speaks for the photos
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.draggable = false;
+      li.append(img);
+      return li;
+    });
+
+    const renderers = { social, highlights, experience, education, stack, projects, certifications, outside };
 
     const showLoadError = (container) => {
       if (container.dataset.render === 'social') return; // static github link stays
@@ -1244,7 +1307,7 @@
 
   const reveal = (() => {
     const SINGLE = ['.github-panel', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
-    const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li'];
+    const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li', '.outside-text', '.deck'];
     const STAGGER_MS = 60;
     const STAGGER_CAP = 8;
 
@@ -1449,6 +1512,118 @@
   })();
 
   /* ==========================================================================
+     14. Outside the IDE — tap / swipe / arrow-key photo deck
+     ========================================================================== */
+
+  const photoDeck = (() => {
+    const HOLD_MS = 300;
+    const LEAVE_MS = 320;
+
+    const init = (data) => {
+      const section = document.getElementById('outside');
+      const deck = $('.deck');
+      const cards = $$('.deck-card');
+      if (!section || !deck) return;
+      if (!cards.length) { section.hidden = true; return; }
+
+      const intro = $('.outside-intro', section);
+      if (data && typeof data.outsideIntro === 'string' && data.outsideIntro.trim()) intro.textContent = data.outsideIntro;
+      else intro.hidden = true;
+
+      const counter = $('.deck-count', section);
+      let index = 0;
+      let busy = false;
+      let inView = false;
+
+      // Live Photo cards loop only while on top, on screen, and motion is allowed.
+      const syncVideos = () => {
+        cards.forEach((card, i) => {
+          const video = $('video', card);
+          if (!video) return;
+          const play = inView && i === index && !prefersReducedMotion();
+          if (play) {
+            if (video.preload !== 'auto') video.preload = 'auto';
+            const attempt = video.play();
+            if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {}); // autoplay blocked: poster stays
+          } else if (!video.paused) {
+            video.pause();
+          }
+        });
+      };
+      let holdTimer = 0;
+      let start = null;
+
+      const layout = () => {
+        cards.forEach((card, i) => {
+          const depth = cardDepth(i, index, cards.length);
+          const style = cardStyle(depth, i);
+          card.style.transform = `translateY(${style.y}px) rotate(${style.rotate}deg) scale(${style.scale})`;
+          card.style.zIndex = String(style.z);
+          card.style.opacity = style.visible ? '1' : '0';
+          card.setAttribute('aria-hidden', depth === 0 ? 'false' : 'true');
+        });
+        counter.textContent = `${index + 1} / ${cards.length}`;
+        syncVideos();
+      };
+
+      const go = (direction) => {
+        if (busy || cards.length < 2) return;
+        const top = cards[index];
+        const finish = () => {
+          top.classList.remove('is-leaving', 'is-leaving-back');
+          index = deckStep(index, cards.length, direction);
+          layout();
+          busy = false;
+        };
+        if (prefersReducedMotion()) { finish(); return; }
+        busy = true;
+        top.classList.add(direction > 0 ? 'is-leaving' : 'is-leaving-back');
+        window.setTimeout(finish, LEAVE_MS);
+      };
+
+      const endHold = () => {
+        window.clearTimeout(holdTimer);
+        deck.classList.remove('is-color');
+      };
+
+      deck.addEventListener('pointerdown', (event) => {
+        start = { x: event.clientX, y: event.clientY, t: Date.now() };
+        holdTimer = window.setTimeout(() => deck.classList.add('is-color'), HOLD_MS);
+      });
+      deck.addEventListener('pointerup', (event) => {
+        const wasHold = deck.classList.contains('is-color');
+        endHold();
+        if (!start || wasHold) { start = null; return; }
+        const action = gestureAction(event.clientX - start.x, event.clientY - start.y);
+        start = null;
+        if (action === 'tap' || action === 'next') go(1);
+        else if (action === 'prev') go(-1);
+      });
+      ['pointercancel', 'pointerleave'].forEach((type) => deck.addEventListener(type, () => { endHold(); start = null; }));
+      deck.addEventListener('contextmenu', (event) => event.preventDefault());
+      deck.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          go(1);
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          go(-1);
+        }
+      });
+
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(([entry]) => {
+          inView = entry.isIntersecting;
+          syncVideos();
+        }, { threshold: 0.25 }).observe(deck);
+      }
+      layout();
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
      99. Boot
      ========================================================================== */
 
@@ -1465,6 +1640,7 @@
     reveal.init();
     visitors.init();
     githubGraph.init(data);
+    photoDeck.init(data);
     const year = $('.footer-year');
     if (year) year.textContent = String(new Date().getFullYear());
   };

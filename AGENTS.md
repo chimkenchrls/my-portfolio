@@ -55,7 +55,7 @@ Motion (all disabled under `prefers-reduced-motion`): one-shot scroll reveal (fa
 
 ## 5. Sections
 Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), "Play chimken" mini game (Alt+K; also a chicken button in the mobile top bar — endless runner in a <dialog>/<canvas>, pure engine tested in tests/chimken.test.js; ck's score to beat is `game.highScore` in data.js — beating it unlocks a saved crown, pixel fireworks, and a copy-brag button), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
-Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → footer `© <year> Kenneth Charles`.
+Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → 06 // Outside the IDE (not in the nav: intro text beside a tap/swipe/arrow-key photo deck; photos in assets/outside/, list in data.js `outside` + `outsideIntro`; B&W, hold for color) → footer `© <year> Kenneth Charles`.
 
 ## 6. Agent Rules of Engagement
 - Content changes go in `assets/data.js` only; use `null` for missing items (never `""`), and never invent metrics, projects, or credentials.
