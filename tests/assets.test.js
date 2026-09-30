@@ -29,11 +29,33 @@ test('index.html has one section per nav target', () => {
   const html = read('index.html');
   for (const id of ['home', 'about', 'stack', 'projects', 'certifications']) {
     assert.match(html, new RegExp(`<section[^>]*id="${id}"`), `section #${id} missing`);
-    assert.match(html, new RegExp(`class="nav-link" href="#${id}"`), `nav link #${id} missing`);
+    assert.match(html, new RegExp(`<a[^>]*class="nav-link"[^>]*href="#${id}"`), `nav link #${id} missing`);
   }
 });
 
 test('hero photo is web-sized (it is the LCP element)', () => {
   const bytes = fs.statSync(path.join(ROOT, 'assets', 'profile.jpg')).size;
   assert.ok(bytes < 200 * 1024, `profile.jpg is ${Math.round(bytes / 1024)} KB`);
+});
+
+test('stats row is removed and the main column is centered', () => {
+  assert.doesNotMatch(read('index.html'), /data-render="stats"/);
+  assert.doesNotMatch(read('style.css'), /\.stats?\b/);
+  assert.match(read('style.css'), /\.main > \* \{ max-width: 880px; margin-inline: auto; \}/);
+});
+
+test('sidebar labels are in title case, not forced lowercase', () => {
+  const css = read('style.css');
+  const navRule = css.slice(css.indexOf('.nav-link,\n.quick-jump-trigger {'), css.indexOf('.nav-link:hover'));
+  assert.doesNotMatch(navRule, /text-transform:\s*lowercase/);
+  const html = read('index.html');
+  for (const text of ['&gt; Aspiring DevOps · Cloud', 'Quick jump…', '>Kenneth Charles</a>']) {
+    assert.ok(html.includes(text), `missing "${text}"`);
+  }
+});
+
+test('GitHub contributions panel sits inside the Stack section', () => {
+  const html = read('index.html');
+  const stack = html.slice(html.indexOf('id="stack"'), html.indexOf('id="projects"'));
+  assert.match(stack, /class="github-panel"/);
 });

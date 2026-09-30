@@ -7,7 +7,7 @@ const ROOT = path.join(__dirname, '..');
 
 test('data.js exports PORTFOLIO_DATA with every section', () => {
   const data = require('../assets/data.js');
-  for (const key of ['profile', 'stats', 'highlights', 'experience', 'education', 'stack', 'projects', 'certifications', 'certificationsPending']) {
+  for (const key of ['profile', 'highlights', 'experience', 'education', 'stack', 'projects', 'certifications', 'certificationsPending']) {
     assert.ok(key in data, `missing ${key}`);
   }
 });
@@ -24,7 +24,7 @@ test('content matches the approved spec', () => {
     'DevOps & Cloud', 'Security & Identity', 'Backend', 'Frontend', 'AI & Machine Learning', 'Developer Tools',
   ]);
   assert.equal(data.certifications.length, 0);
-  assert.equal(data.stats[3].label, 'projects built & building');
+  assert.ok(!('stats' in data), 'stats row was removed');
 });
 
 test('every stack icon slug has a file on disk', () => {

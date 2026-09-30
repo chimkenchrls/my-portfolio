@@ -1,6 +1,8 @@
 {
   "extends": ["html-validate:recommended"],
   "rules": {
-    "require-sri": "off"
+    "require-sri": "off",
+    "doctype-style": "off",
+    "void-style": ["error", { "style": "selfclose" }]
   }
 }

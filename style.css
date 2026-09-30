@@ -2,7 +2,7 @@
    Kenneth Charles Valdez — Portfolio
    1. Fonts        2. Tokens        3. Base          4. Utilities
    5. Icons        6. Layout        7. Sidebar       8. Rail mode
-   9. Hero        10. Pixel photo  11. Stats        12. Dividers & sections
+   9. Hero        10. Pixel photo                   12. Dividers & sections
    13. About      14. Stack        15. Projects     16. Pending states
    17. Quick jump 18. Footer       19. Motion       20. Responsive
    ========================================================================== */
@@ -216,7 +216,7 @@ kbd { font: inherit; }
   outline: none;
   transition: margin-left var(--t) var(--ease);
 }
-.main > * { max-width: 880px; }
+.main > * { max-width: 880px; margin-inline: auto; }
 
 /* 7. Sidebar ============================================================== */
 .brand { display: flex; flex-direction: column; gap: 4px; }
@@ -246,7 +246,6 @@ kbd { font: inherit; }
   font-family: var(--font-mono);
   font-size: 12px;
   text-align: left;
-  text-transform: lowercase;
   color: var(--fg-muted);
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -421,21 +420,6 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .hero-photo:hover .pixel-tile { opacity: 1; }
 }
 
-/* 11. Stats =============================================================== */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  margin-bottom: 64px;
-  overflow: hidden;
-  background: var(--border);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-.stat { display: flex; flex-direction: column; gap: 6px; padding: 20px; background: var(--bg); }
-.stat-value { font-family: var(--font-pixel); font-size: 22px; line-height: 1.2; }
-.stat-label { font-family: var(--font-mono); font-size: 11px; line-height: 1.5; color: var(--fg-muted); }
-
 /* 12. Dividers & section heads ============================================ */
 .divider { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
 .divider-line {
@@ -539,6 +523,36 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   transition: border-color var(--t-fast) ease;
 }
 .stack-item:hover { border-color: var(--fg); }
+
+/* GitHub contributions (inside the Stack section) */
+.github-panel {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.github-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+.github-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.github-user { font-family: var(--font-mono); font-size: 11px; }
+.github-graph { overflow-x: auto; color: var(--fg); }
+.github-graph svg { display: block; }
+.github-dot-empty { opacity: 0.18; }
+.github-total {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
 
 /* 15. Projects ============================================================ */
 .project { padding: 22px 0; border-bottom: 1px solid var(--border); }
@@ -732,7 +746,11 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 }
 
 @media (max-width: 860px) {
-  .hero { flex-direction: column; align-items: flex-start; gap: 28px; min-height: 0; }
+  /* Stacked hero is centered, like the React site on small screens. */
+  .hero { flex-direction: column; align-items: center; gap: 28px; min-height: 0; text-align: center; }
+  .hero-text { align-items: center; }
+  .hero-location,
+  .hero-actions { justify-content: center; }
 }
 
 @media (max-width: 639.98px) {
@@ -780,7 +798,6 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .main { margin-left: 0; padding: 28px 16px 24px; }
   .section { padding-bottom: 48px; scroll-margin-top: calc(var(--topbar-h) + 16px); }
   .hero-photo { width: 224px; }
-  .stats { grid-template-columns: repeat(2, 1fr); margin-bottom: 48px; }
   .stack-grid { grid-template-columns: 1fr; }
   .divider-label { letter-spacing: 0.25em; }
 }

@@ -141,3 +141,47 @@ test('joinParts drops missing pieces instead of printing undefined', () => {
   assert.equal(joinParts([undefined, '2027']), '2027');
   assert.equal(joinParts([null, '', '  ']), '');
 });
+
+const day = (date, count, level) => ({ date, count, level });
+
+test('parseContributions accepts the API payload and totals the year', () => {
+  const { parseContributions } = require('../script.js');
+  const parsed = parseContributions({
+    total: { lastYear: 5 },
+    contributions: [day('2026-09-27', 0, 0), day('2026-09-28', 5, 4)],
+  });
+  assert.equal(parsed.total, 5);
+  assert.equal(parsed.days.length, 2);
+  const summed = parseContributions({ contributions: [day('2026-09-27', 2, 1), day('2026-09-28', 3, 2)] });
+  assert.equal(summed.total, 5);
+});
+
+test('parseContributions rejects junk', () => {
+  const { parseContributions } = require('../script.js');
+  for (const bad of [null, {}, { contributions: [] }, { contributions: 'x' },
+    { contributions: [day('nope', 1, 1)] }, { contributions: [day('2026-09-28', 1, 7)] },
+    { contributions: [{ date: '2026-09-28' }] }]) {
+    assert.equal(parseContributions(bad), null, JSON.stringify(bad));
+  }
+});
+
+test('buildContributionWeeks aligns days to Sunday-first weeks', () => {
+  const { buildContributionWeeks } = require('../script.js');
+  // 2026-09-30 is a Wednesday (index 3)
+  const weeks = buildContributionWeeks([
+    day('2026-09-30', 1, 1), day('2026-10-01', 0, 0), day('2026-10-02', 0, 0),
+    day('2026-10-03', 0, 0), day('2026-10-04', 9, 4),
+  ]);
+  assert.equal(weeks.length, 2);
+  assert.deepEqual(weeks[0].map((d) => d && d.date), [null, null, null, '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03']);
+  assert.equal(weeks[1][0].date, '2026-10-04');
+  assert.equal(weeks[1].length, 1);
+});
+
+test('dotRadius grows with activity level like the React calendar', () => {
+  const { dotRadius } = require('../script.js');
+  assert.equal(dotRadius(0, 10), 1.5);
+  assert.equal(dotRadius(4, 10), 5);
+  assert.ok(dotRadius(2, 10) > dotRadius(1, 10));
+  assert.equal(dotRadius(9, 10), 5);
+});

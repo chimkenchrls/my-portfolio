@@ -101,6 +101,39 @@
     .filter((part) => typeof part === 'string' && part.trim() !== '')
     .join(separator);
 
+  // GitHub contributions payload → { days, total }, or null if unusable.
+  const parseContributions = (payload) => {
+    const days = payload && payload.contributions;
+    if (!Array.isArray(days) || !days.length) return null;
+    const valid = days.every((d) => d
+      && /^\d{4}-\d{2}-\d{2}$/.test(d.date)
+      && Number.isInteger(d.level) && d.level >= 0 && d.level <= 4
+      && Number.isFinite(d.count));
+    if (!valid) return null;
+    const reported = payload.total && payload.total.lastYear;
+    const total = Number.isFinite(reported) ? reported : days.reduce((sum, d) => sum + d.count, 0);
+    return { days, total };
+  };
+
+  // Groups consecutive days into Sunday-first weeks; the first week is padded
+  // with nulls so each day lands in its weekday row.
+  const buildContributionWeeks = (days) => {
+    const weeks = [];
+    let week = new Array(new Date(`${days[0].date}T00:00:00Z`).getUTCDay()).fill(null);
+    days.forEach((d) => {
+      week.push(d);
+      if (week.length === 7) { weeks.push(week); week = []; }
+    });
+    if (week.length) weeks.push(week);
+    return weeks;
+  };
+
+  // Dot radius for an activity level (0–4), scaled like react-github-calendar.
+  const dotRadius = (level, cellSize) => {
+    const clamped = Math.min(Math.max(level, 0), 4);
+    return (cellSize * (0.3 + (clamped / 4) * 0.7)) / 2;
+  };
+
   const filterSections = (sections, query) => {
     const q = String(query || '').trim().toLowerCase();
     if (!q) return sections.slice();
@@ -127,11 +160,9 @@
         if (!isOptionalUrl(profile[k])) errors.push(`profile.${k}: must be an https URL or null`);
       });
       if (!isOptionalText(profile.discord)) errors.push('profile.discord: text or null');
+      if (!isOptionalText(profile.githubUsername)) errors.push('profile.githubUsername: text or null');
     }
 
-    checkList('stats', data.stats, (s, p) => {
-      if (!isText(s.value) || !isText(s.label)) errors.push(`${p}: value and label required`);
-    });
     checkList('highlights', data.highlights, (h, p) => {
       if (!isText(h.icon) || !isText(h.label)) errors.push(`${p}: icon and label required`);
     });
@@ -171,6 +202,7 @@
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
       SECTIONS, padCount, safeUrl, computeTiles, revealDelays, joinParts,
+      parseContributions, buildContributionWeeks, dotRadius,
       isTypingTarget, resolveShortcut, filterSections, validateData,
     };
   }
@@ -271,12 +303,6 @@
       });
     };
 
-    const stats = ({ stats: items = [] }) => items.map(({ value, label }) => {
-      const group = el('div', 'stat');
-      group.append(el('dt', 'stat-value', value), el('dd', 'stat-label', label));
-      return group;
-    });
-
     const highlights = ({ highlights: items = [] }) => items.map(({ icon, label }) => {
       const li = el('li', 'chip');
       const badge = el('span', 'chip-icon');
@@ -371,11 +397,10 @@
       });
     };
 
-    const renderers = { social, stats, highlights, experience, education, stack, projects, certifications };
+    const renderers = { social, highlights, experience, education, stack, projects, certifications };
 
     const showLoadError = (container) => {
       if (container.dataset.render === 'social') return; // static github link stays
-      if (container.tagName === 'DL') { container.hidden = true; return; }
       const tag = container.tagName === 'UL' || container.tagName === 'OL' ? 'li' : 'p';
       container.replaceChildren(pendingEl(tag, 'Content failed to load.'));
     };
@@ -818,7 +843,7 @@
      ========================================================================== */
 
   const reveal = (() => {
-    const SINGLE = ['.stats', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
+    const SINGLE = ['.github-panel', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
     const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li'];
     const STAGGER_MS = 60;
     const STAGGER_CAP = 8;
@@ -932,6 +957,91 @@
   })();
 
   /* ==========================================================================
+     13. GitHub contributions — dot calendar under the stack, hidden on failure
+     ========================================================================== */
+
+  const githubGraph = (() => {
+    const API = 'https://github-contributions-api.jogruber.de/v4';
+    const CELL = 14;
+    const DOT = 10;
+    const TIMEOUT_MS = 5000;
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    const svgEl = (tag, attrs) => {
+      const node = document.createElementNS(SVG_NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, String(value)));
+      return node;
+    };
+
+    const draw = (graph, days) => {
+      const weeks = buildContributionWeeks(days);
+      const width = weeks.length * CELL;
+      const height = 7 * CELL;
+      const svg = svgEl('svg', { width, height, viewBox: `0 0 ${width} ${height}`, role: 'img' });
+      svg.setAttribute('aria-label', 'GitHub contribution activity over the last year');
+      weeks.forEach((week, col) => {
+        week.forEach((d, row) => {
+          if (!d) return;
+          const dot = svgEl('circle', {
+            cx: col * CELL + CELL / 2,
+            cy: row * CELL + CELL / 2,
+            r: dotRadius(d.level, DOT),
+            fill: 'currentColor',
+          });
+          if (d.level === 0) dot.setAttribute('class', 'github-dot-empty');
+          const title = svgEl('title', {});
+          title.textContent = `${d.count} contribution${d.count === 1 ? '' : 's'} on ${d.date}`;
+          dot.append(title);
+          svg.append(dot);
+        });
+      });
+      graph.replaceChildren(svg);
+      graph.scrollLeft = graph.scrollWidth; // most recent weeks first on narrow screens
+    };
+
+    const load = async (panel, username) => {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const response = await fetch(`${API}/${encodeURIComponent(username)}?y=last`, { signal: controller.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const parsed = parseContributions(await response.json());
+        if (!parsed) throw new Error('Unusable contributions payload');
+        panel.hidden = false;
+        draw($('.github-graph', panel), parsed.days);
+        $('.github-total', panel).textContent =
+          `${parsed.total.toLocaleString('en-US')} contribution${parsed.total === 1 ? '' : 's'} in the last year`;
+      } catch {
+        panel.hidden = true;
+      } finally {
+        window.clearTimeout(timer);
+      }
+    };
+
+    const init = (data) => {
+      const panel = $('.github-panel');
+      const profile = (data && data.profile) || {};
+      const username = typeof profile.githubUsername === 'string' ? profile.githubUsername.trim() : '';
+      if (!panel || !username || typeof fetch !== 'function' || typeof AbortController !== 'function') return;
+
+      const link = $('.github-user', panel);
+      link.href = `https://github.com/${encodeURIComponent(username)}`;
+      link.textContent = `@${username} ↗`;
+
+      const section = document.getElementById('stack');
+      if (!('IntersectionObserver' in window) || !section) { load(panel, username); return; }
+      const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        load(panel, username);
+      }, { rootMargin: '400px 0px' });
+      observer.observe(section);
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
      99. Boot
      ========================================================================== */
 
@@ -947,6 +1057,7 @@
     pixelPhoto.init();
     reveal.init();
     visitors.init();
+    githubGraph.init(data);
     const year = $('.footer-year');
     if (year) year.textContent = String(new Date().getFullYear());
   };

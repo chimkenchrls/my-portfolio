@@ -45,7 +45,7 @@ Tokens (`:root`, dark under `[data-theme="dark"]`):
 - Dark: `--bg rgb(12,12,15)`, `--bg-alt #18181b`, `--fg #fafafa`, `--fg-muted #a6a6ad`, `--border #27272a`
 - A faint dotted grid (`--dot`) covers the whole canvas in both themes.
 
-Typography: Geist (body), Geist Mono (nav, labels, metadata, dates, tags; uppercase with wide letter-spacing for labels), Geist Pixel (hero name and stat values only).
+Typography: Geist (body), Geist Mono (nav, labels, metadata, dates, tags; uppercase with wide letter-spacing for section labels; sidebar nav and actions in Title Case), Geist Pixel (hero name only).
 
 Layout: fixed 260px sidebar + scrolling main column (max 880px) on desktop (>1024px, collapsible to a 64px rail); 64px icon rail on tablet (640–1024px); sticky top bar + slide-in drawer on mobile (<640px).
 
@@ -55,7 +55,7 @@ Motion (all disabled under `prefers-reduced-motion`): one-shot scroll reveal (fa
 
 ## 5. Sections
 Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), quick jump (Alt+K or /), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
-Main: hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → stats row → About (bio, highlight chips, Experience + Education) → Stack → Projects → Certifications → footer `© <year> Kenneth Charles`.
+Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → footer `© <year> Kenneth Charles`.
 
 ## 6. Agent Rules of Engagement
 - Content changes go in `assets/data.js` only; use `null` for missing items (never `""`), and never invent metrics, projects, or credentials.

@@ -1,171 +1,344 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kenneth Charles Valdez — Aspiring DevOps &amp; Cloud Engineer</title>
-  <meta name="description" content="Kenneth Charles Valdez — 4th-year BS Computer Science student and aspiring DevOps / Cloud Engineer from Sariaya, Quezon, Philippines. Open to OJT / internship.">
-  <meta name="color-scheme" content="light dark">
-  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
-  <script>
-    (function () {
-      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      var theme = dark ? 'dark' : 'light';
-      try {
-        var stored = localStorage.getItem('theme');
-        if (stored === 'light' || stored === 'dark') theme = stored;
-      } catch (e) { /* storage blocked: keep system preference */ }
-      document.documentElement.setAttribute('data-theme', theme);
-    })();
-  </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&amp;family=Geist+Mono:wght@400..600&amp;display=swap">
-  <link rel="preload" href="./assets/fonts/GeistPixel-Square.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="./style.css">
-  <script src="./assets/data.js" defer></script>
-  <script src="./script.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#main">Skip to main content</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kenneth Charles Valdez — Aspiring DevOps &amp; Cloud Engineer</title>
+    <meta
+      name="description"
+      content="Kenneth Charles Valdez — 4th-year BS Computer Science student and aspiring DevOps / Cloud Engineer from Sariaya, Quezon, Philippines. Open to OJT / internship."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
+    <script>
+      (function () {
+        var dark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme = dark ? "dark" : "light";
+        try {
+          var stored = localStorage.getItem("theme");
+          if (stored === "light" || stored === "dark") theme = stored;
+        } catch (e) {
+          /* storage blocked: keep system preference */
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&amp;family=Geist+Mono:wght@400..600&amp;display=swap"
+    />
+    <link
+      rel="preload"
+      href="./assets/fonts/GeistPixel-Square.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./assets/data.js" defer></script>
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
 
-  <header class="topbar">
-    <a class="topbar-brand" href="#home">kenneth charles</a>
-    <button class="menu-toggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">
-      <span class="menu-bar"></span>
-      <span class="menu-bar"></span>
-    </button>
-  </header>
-
-  <div class="backdrop" hidden></div>
-
-  <aside class="sidebar" id="sidebar" aria-label="Sidebar">
-    <a class="brand" href="#home">
-      <span class="brand-mark" aria-hidden="true">KC</span>
-      <span class="brand-name">Kenneth Charles Valdez</span>
-      <span class="brand-sub">&gt; aspiring devops · cloud</span>
-    </a>
-
-    <nav class="nav" aria-label="Sections">
-      <p class="nav-label">menu</p>
-      <ul class="nav-list">
-        <li><a class="nav-link" href="#home" data-section="home" title="Home"><span class="icon icon-home" aria-hidden="true"></span><span class="nav-text">Home</span><kbd class="kbd">1</kbd></a></li>
-        <li><a class="nav-link" href="#about" data-section="about" title="About"><span class="icon icon-about" aria-hidden="true"></span><span class="nav-text">About</span><kbd class="kbd">2</kbd></a></li>
-        <li><a class="nav-link" href="#stack" data-section="stack" title="Stack"><span class="icon icon-stack" aria-hidden="true"></span><span class="nav-text">Stack</span><kbd class="kbd">3</kbd></a></li>
-        <li><a class="nav-link" href="#projects" data-section="projects" title="Projects"><span class="icon icon-projects" aria-hidden="true"></span><span class="nav-text">Projects</span><kbd class="kbd">4</kbd></a></li>
-        <li><a class="nav-link" href="#certifications" data-section="certifications" title="Certifications"><span class="icon icon-certifications" aria-hidden="true"></span><span class="nav-text">Certifications</span><kbd class="kbd">5</kbd></a></li>
-      </ul>
-      <button class="quick-jump-trigger" type="button" aria-haspopup="dialog" title="Quick jump (Alt + K)">
-        <span class="icon icon-search" aria-hidden="true"></span><span class="nav-text">quick jump…</span><kbd class="kbd">Alt + K</kbd>
+    <header class="topbar">
+      <a class="topbar-brand" href="#home">Kenneth Charles</a>
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-controls="sidebar"
+        aria-expanded="false"
+        aria-label="Open navigation"
+      >
+        <span class="menu-bar"></span>
+        <span class="menu-bar"></span>
       </button>
-    </nav>
+    </header>
 
-    <div class="sidebar-bottom">
-      <p class="status" title="Open to OJT / internship"><span class="status-dot" aria-hidden="true"></span><span class="nav-text">open to OJT / internship</span></p>
-      <button class="copy-email" type="button" data-email data-copy="charleskenneth129@gmail.com" aria-label="Copy email address charleskenneth129@gmail.com" title="Copy email">
-        <span class="icon icon-sm icon-copy" aria-hidden="true"></span><span class="nav-text" data-copy-label>charleskenneth129@gmail.com</span>
-      </button>
-      <p class="visitors" hidden><span class="meta-label">visitors</span><span class="visitors-count">0000</span></p>
-      <div class="sidebar-controls">
-        <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme (T)">
-          <span class="icon icon-sm icon-sun theme-icon" aria-hidden="true"></span><span class="theme-label">[MODE: LIGHT]</span><kbd class="kbd">T</kbd>
+    <div class="backdrop" hidden></div>
+
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <a class="brand" href="#home">
+        <span class="brand-mark" aria-hidden="true">KC</span>
+        <span class="brand-name">Kenneth Charles Valdez</span>
+        <span class="brand-sub">&gt; Aspiring DevOps · Cloud</span>
+      </a>
+
+      <nav class="nav" aria-label="Sections">
+        <p class="nav-label">menu</p>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link" href="#home" data-section="home" title="Home"
+              ><span class="icon icon-home" aria-hidden="true"></span
+              ><span class="nav-text">Home</span><kbd class="kbd">1</kbd></a
+            >
+          </li>
+          <li>
+            <a class="nav-link" href="#about" data-section="about" title="About"
+              ><span class="icon icon-about" aria-hidden="true"></span
+              ><span class="nav-text">About</span><kbd class="kbd">2</kbd></a
+            >
+          </li>
+          <li>
+            <a class="nav-link" href="#stack" data-section="stack" title="Stack"
+              ><span class="icon icon-stack" aria-hidden="true"></span
+              ><span class="nav-text">Stack</span><kbd class="kbd">3</kbd></a
+            >
+          </li>
+          <li>
+            <a
+              class="nav-link"
+              href="#projects"
+              data-section="projects"
+              title="Projects"
+              ><span class="icon icon-projects" aria-hidden="true"></span
+              ><span class="nav-text">Projects</span><kbd class="kbd">4</kbd></a
+            >
+          </li>
+          <li>
+            <a
+              class="nav-link"
+              href="#certifications"
+              data-section="certifications"
+              title="Certifications"
+              ><span class="icon icon-certifications" aria-hidden="true"></span
+              ><span class="nav-text">Certifications</span
+              ><kbd class="kbd">5</kbd></a
+            >
+          </li>
+        </ul>
+        <button
+          class="quick-jump-trigger"
+          type="button"
+          aria-haspopup="dialog"
+          title="Quick jump (Alt + K)"
+        >
+          <span class="icon icon-search" aria-hidden="true"></span
+          ><span class="nav-text">Quick jump…</span
+          ><kbd class="kbd">Alt + K</kbd>
         </button>
-        <button class="collapse-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar">[&lt;&lt;]</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <p class="status" title="Open to OJT / Internship">
+          <span class="status-dot" aria-hidden="true"></span
+          ><span class="nav-text">Open to OJT / Internship</span>
+        </p>
+        <button
+          class="copy-email"
+          type="button"
+          data-email
+          data-copy="charleskenneth129@gmail.com"
+          aria-label="Copy email address charleskenneth129@gmail.com"
+          title="Copy email"
+        >
+          <span class="icon icon-sm icon-copy" aria-hidden="true"></span
+          ><span class="nav-text" data-copy-label
+            >charleskenneth129@gmail.com</span
+          >
+        </button>
+        <p class="visitors" hidden>
+          <span class="meta-label">visitors</span
+          ><span class="visitors-count">0000</span>
+        </p>
+        <div class="sidebar-controls">
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Toggle color theme"
+            title="Toggle theme (T)"
+          >
+            <span
+              class="icon icon-sm icon-sun theme-icon"
+              aria-hidden="true"
+            ></span
+            ><span class="theme-label">[MODE: LIGHT]</span
+            ><kbd class="kbd">T</kbd>
+          </button>
+          <button
+            class="collapse-toggle"
+            type="button"
+            aria-controls="sidebar"
+            aria-expanded="true"
+            aria-label="Collapse sidebar"
+          >
+            [&lt;&lt;]
+          </button>
+        </div>
       </div>
+    </aside>
+
+    <main class="main" id="main" tabindex="-1">
+      <section class="section hero" id="home" aria-labelledby="hero-name">
+        <div
+          class="hero-photo"
+          role="img"
+          tabindex="0"
+          aria-label="Black-and-white portrait of Kenneth Charles Valdez. Hover, focus, or tap to reveal a pixelated alternate image."
+        >
+          <img
+            class="hero-photo-img"
+            src="./assets/profile.jpg"
+            alt=""
+            width="640"
+            height="640"
+          />
+        </div>
+        <div class="hero-text">
+          <p class="eyebrow">Building. Learning. Shipping.</p>
+          <h1 class="hero-name" id="hero-name">Kenneth Charles Valdez</h1>
+          <p class="hero-title">Aspiring DevOps Engineer | Cloud Engineer</p>
+          <p class="hero-location">
+            <span class="icon icon-sm icon-pin" aria-hidden="true"></span
+            >Sariaya, Quezon, Philippines
+          </p>
+          <div class="hero-actions">
+            <a
+              class="btn btn-primary"
+              href="mailto:charleskenneth129@gmail.com"
+              data-email
+              >Email me</a
+            >
+          </div>
+          <p class="social" data-render="social">
+            <a
+              href="https://github.com/chimkenchrls"
+              target="_blank"
+              rel="noopener noreferrer"
+              >github</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <noscript
+        ><p class="noscript-note">
+          Enable JavaScript to see experience, stack, projects, and
+          certifications.
+        </p></noscript
+      >
+
+      <section class="section" id="about" aria-labelledby="about-heading">
+        <div class="divider">
+          <span class="divider-line"></span>
+          <h2 class="divider-label" id="about-heading">
+            <span class="divider-index" aria-hidden="true">02 //</span> About
+          </h2>
+          <span class="divider-line"></span>
+        </div>
+        <div class="about-bio">
+          <p>
+            I’m a 4th-year BS Computer Science student at STI College Lucena
+            with a real passion for tech. I got into DevOps and Cloud
+            Engineering because I love figuring out how systems fit together and
+            making deployments smooth and scalable.
+          </p>
+          <p>
+            Right now, I’m just building side projects to sharpen my skills. I
+            really enjoy turning rough ideas into practical tools that people
+            can actually use.
+          </p>
+        </div>
+        <ul class="chips" data-render="highlights"></ul>
+        <div class="about-grid">
+          <div class="timeline-block">
+            <h3 class="block-title">Experience</h3>
+            <ul class="rows" data-render="experience"></ul>
+          </div>
+          <div class="timeline-block">
+            <h3 class="block-title">Education</h3>
+            <ul class="rows" data-render="education"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="stack" aria-labelledby="stack-heading">
+        <div class="divider">
+          <span class="divider-line"></span>
+          <h2 class="divider-label" id="stack-heading">
+            <span class="divider-index" aria-hidden="true">03 //</span> Stack
+          </h2>
+          <span class="divider-line"></span>
+        </div>
+        <div class="stack-grid" data-render="stack"></div>
+        <div class="github-panel" hidden>
+          <div class="github-head">
+            <h3 class="github-title">GitHub</h3>
+            <a
+              class="github-user text-link"
+              href="https://github.com/chimkenchrls"
+              target="_blank"
+              rel="noopener noreferrer"
+              >@chimkenchrls ↗</a
+            >
+          </div>
+          <div class="github-graph"></div>
+          <p class="github-total"></p>
+        </div>
+      </section>
+
+      <section class="section" id="projects" aria-labelledby="projects-heading">
+        <div class="divider">
+          <span class="divider-line"></span>
+          <h2 class="divider-label" id="projects-heading">
+            <span class="divider-index" aria-hidden="true">04 //</span> Projects
+          </h2>
+          <span class="divider-line"></span>
+        </div>
+        <div class="list-head" aria-hidden="true">
+          <span>project</span><span>status // year</span>
+        </div>
+        <ol class="project-list" data-render="projects"></ol>
+      </section>
+
+      <section
+        class="section"
+        id="certifications"
+        aria-labelledby="certifications-heading"
+      >
+        <div class="divider">
+          <span class="divider-line"></span>
+          <h2 class="divider-label" id="certifications-heading">
+            <span class="divider-index" aria-hidden="true">05 //</span>
+            Certifications
+          </h2>
+          <span class="divider-line"></span>
+        </div>
+        <ul class="rows" data-render="certifications"></ul>
+      </section>
+
+      <footer class="footer">
+        <p>© <span class="footer-year">2026</span> Kenneth Charles</p>
+      </footer>
+    </main>
+
+    <dialog class="quick-jump" aria-labelledby="quick-jump-title">
+      <p class="quick-jump-title" id="quick-jump-title">quick jump</p>
+      <label class="visually-hidden" for="quick-jump-input"
+        >Filter sections</label
+      >
+      <input
+        class="quick-jump-input"
+        id="quick-jump-input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="type a section…"
+      />
+      <ul class="quick-jump-list"></ul>
+      <p class="quick-jump-hint">↑↓ navigate · enter jump · esc close</p>
+    </dialog>
+
+    <div class="toast" hidden>
+      <p class="toast-text"></p>
+      <label class="visually-hidden" for="toast-input">Text to copy</label>
+      <input class="toast-input" id="toast-input" type="text" readonly hidden />
     </div>
-  </aside>
 
-  <main class="main" id="main" tabindex="-1">
-    <section class="section hero" id="home" aria-labelledby="hero-name">
-      <div class="hero-photo" role="img" tabindex="0" aria-label="Black-and-white portrait of Kenneth Charles Valdez. Hover, focus, or tap to reveal a pixelated alternate image.">
-        <img class="hero-photo-img" src="./assets/profile.jpg" alt="" width="640" height="640">
-      </div>
-      <div class="hero-text">
-        <p class="eyebrow">Building. Learning. Shipping.</p>
-        <h1 class="hero-name" id="hero-name">Kenneth Charles Valdez</h1>
-        <p class="hero-title">Aspiring DevOps Engineer | Cloud Engineer</p>
-        <p class="hero-location"><span class="icon icon-sm icon-pin" aria-hidden="true"></span>Sariaya, Quezon, Philippines</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="mailto:charleskenneth129@gmail.com" data-email>Email me</a>
-        </div>
-        <p class="social" data-render="social"><a href="https://github.com/chimkenchrls" target="_blank" rel="noopener noreferrer">github</a></p>
-      </div>
-    </section>
-
-    <noscript><p class="noscript-note">Enable JavaScript to see experience, stack, projects, and certifications.</p></noscript>
-
-    <dl class="stats" data-render="stats"></dl>
-
-    <section class="section" id="about" aria-labelledby="about-heading">
-      <div class="divider">
-        <span class="divider-line"></span>
-        <h2 class="divider-label" id="about-heading"><span class="divider-index" aria-hidden="true">02 //</span> About</h2>
-        <span class="divider-line"></span>
-      </div>
-      <div class="about-bio">
-        <p>I’m a 4th-year BS Computer Science student at STI College Lucena with a real passion for tech. I got into DevOps and Cloud Engineering because I love figuring out how systems fit together and making deployments smooth and scalable.</p>
-        <p>Right now, I’m just building side projects to sharpen my skills. I really enjoy turning rough ideas into practical tools that people can actually use.</p>
-      </div>
-      <ul class="chips" data-render="highlights"></ul>
-      <div class="about-grid">
-        <div class="timeline-block">
-          <h3 class="block-title">Experience</h3>
-          <ul class="rows" data-render="experience"></ul>
-        </div>
-        <div class="timeline-block">
-          <h3 class="block-title">Education</h3>
-          <ul class="rows" data-render="education"></ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="stack" aria-labelledby="stack-heading">
-      <div class="divider">
-        <span class="divider-line"></span>
-        <h2 class="divider-label" id="stack-heading"><span class="divider-index" aria-hidden="true">03 //</span> Stack</h2>
-        <span class="divider-line"></span>
-      </div>
-      <div class="stack-grid" data-render="stack"></div>
-    </section>
-
-    <section class="section" id="projects" aria-labelledby="projects-heading">
-      <div class="divider">
-        <span class="divider-line"></span>
-        <h2 class="divider-label" id="projects-heading"><span class="divider-index" aria-hidden="true">04 //</span> Projects</h2>
-        <span class="divider-line"></span>
-      </div>
-      <div class="list-head" aria-hidden="true"><span>project</span><span>status // year</span></div>
-      <ol class="project-list" data-render="projects"></ol>
-    </section>
-
-    <section class="section" id="certifications" aria-labelledby="certifications-heading">
-      <div class="divider">
-        <span class="divider-line"></span>
-        <h2 class="divider-label" id="certifications-heading"><span class="divider-index" aria-hidden="true">05 //</span> Certifications</h2>
-        <span class="divider-line"></span>
-      </div>
-      <ul class="rows" data-render="certifications"></ul>
-    </section>
-
-    <footer class="footer">
-      <p>© <span class="footer-year">2026</span> Kenneth Charles</p>
-    </footer>
-  </main>
-
-  <dialog class="quick-jump" aria-labelledby="quick-jump-title">
-    <p class="quick-jump-title" id="quick-jump-title">quick jump</p>
-    <label class="visually-hidden" for="quick-jump-input">Filter sections</label>
-    <input class="quick-jump-input" id="quick-jump-input" type="text" autocomplete="off" spellcheck="false" placeholder="type a section…">
-    <ul class="quick-jump-list"></ul>
-    <p class="quick-jump-hint">↑↓ navigate · enter jump · esc close</p>
-  </dialog>
-
-  <div class="toast" hidden>
-    <p class="toast-text"></p>
-    <label class="visually-hidden" for="toast-input">Text to copy</label>
-    <input class="toast-input" id="toast-input" type="text" readonly hidden>
-  </div>
-
-  <p class="sr-status visually-hidden" role="status" aria-live="polite"></p>
-</body>
+    <p class="sr-status visually-hidden" role="status" aria-live="polite"></p>
+  </body>
 </html>
