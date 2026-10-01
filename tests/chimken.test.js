@@ -216,8 +216,8 @@ test('passedRival fires exactly once, on the frame the score crosses it', () => 
 
 test('bragText names the score, the rival, and the site', () => {
   assert.equal(
-    bragText(6012, RIVAL, 'https://chimkenchrls.github.io/my-portfolio/'),
-    "I scored 6012 on chimken and beat ck's 3236 🐔 https://chimkenchrls.github.io/my-portfolio/",
+    bragText(6012, RIVAL, 'https://chimkenchrls.github.io/portfolio/'),
+    "I scored 6012 on chimken and beat ck's 3236 🐔 https://chimkenchrls.github.io/portfolio/",
   );
 });
 

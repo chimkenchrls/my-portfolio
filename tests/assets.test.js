@@ -148,3 +148,16 @@ test('mobile tap highlight is disabled site-wide, with a pressed state instead',
   assert.match(htmlRule, /-webkit-tap-highlight-color:\s*transparent/);
   assert.match(css, /@media \(hover: none\)[\s\S]*?:active/);
 });
+
+test('photo deck markup: cards live inside the deck; counter and hint sit below it', () => {
+  const html = read('index.html');
+  const section = html.slice(html.indexOf('id="outside"'), html.indexOf('id="contact"'));
+  assert.match(section, /class="deck"[^>]*>\s*<ul class="deck-cards" data-render="outside"><\/ul>\s*<\/div>/, 'the photo list must be inside .deck');
+  const column = section.slice(section.indexOf('class="deck-column"'));
+  assert.ok(section.includes('class="deck-column"'), 'deck column exists');
+  const deckAt = column.indexOf('class="deck"');
+  assert.ok(column.indexOf('class="deck-count"') > deckAt, 'counter comes after the deck');
+  assert.ok(column.indexOf('class="deck-hint"') > column.indexOf('class="deck-count"'), 'hint comes after the counter');
+  const text = section.slice(section.indexOf('class="outside-text"'), section.indexOf('class="deck-column"'));
+  assert.doesNotMatch(text, /deck-count|deck-hint/, 'only the description stays beside the deck');
+});

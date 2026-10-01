@@ -601,10 +601,12 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 .outside { display: grid; grid-template-columns: 1fr minmax(0, 360px); gap: 48px; align-items: center; overflow-x: clip; overflow-y: visible; padding: 12px 28px; }
 .outside-text { display: flex; flex-direction: column; gap: 20px; }
 .outside-intro { max-width: 46ch; font-size: 16px; }
-.outside-now { padding-top: 14px; border-top: 1px solid var(--border); }
+.deck-column { min-width: 0; }
+/* Counter and hint sit centered under the cards. */
 .deck-count,
-.deck-hint { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }
-.deck-count { margin-top: 4px; font-variant-numeric: tabular-nums; }
+.deck-hint { font-family: var(--font-mono); font-size: 11px; text-align: center; color: var(--fg-muted); }
+.deck-count { font-variant-numeric: tabular-nums; color: var(--fg); }
+.deck-hint { margin-top: 6px; }
 @media (hover: none) { .hint-keys { display: none; } }
 .deck {
   position: relative;
@@ -613,7 +615,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   isolation: isolate;
   width: 100%;
   aspect-ratio: 4 / 5;
-  margin-bottom: 20px;
+  margin-bottom: 36px; /* room for the cards peeking out below */
   cursor: pointer;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
@@ -934,7 +936,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .hero-photo { width: 256px; }
   .about-grid { grid-template-columns: 1fr; }
   .outside { grid-template-columns: 1fr; gap: 28px; }
-  .deck { width: min(300px, 84%); margin-inline: auto; }
+  .deck-column { width: min(300px, 84%); margin-inline: auto; }
 }
 
 @media (max-width: 860px) {

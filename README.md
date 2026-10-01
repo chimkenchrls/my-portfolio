@@ -1,9 +1,9 @@
 # Portfolio
 
-[![Check & Deploy](https://github.com/chimkenchrls/my-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/chimkenchrls/my-portfolio/actions/workflows/deploy.yml)
+[![Check & Deploy](https://github.com/chimkenchrls/portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/chimkenchrls/portfolio/actions/workflows/deploy.yml)
 
 Static portfolio in plain HTML, CSS, and vanilla JavaScript: no framework, no build step.
-Live at **https://chimkenchrls.github.io/my-portfolio/**.
+Live at **https://chimkenchrls.github.io/portfolio/**.
 
 ## Updating content
 

@@ -349,24 +349,25 @@
           <span class="divider-line"></span>
         </div>
         <div class="outside">
-          <ul class="deck-cards" data-render="outside"></ul>
           <div class="outside-text">
             <p class="outside-intro"></p>
-            <div class="outside-now">
-              <p class="deck-count" aria-live="polite"></p>
+          </div>
+          <div class="deck-column">
+            <div
+              class="deck"
+              role="group"
+              aria-roledescription="photo deck"
+              aria-label="Photos from outside the IDE. Press Enter or the arrow keys for the next photo."
+              tabindex="0"
+            >
+              <ul class="deck-cards" data-render="outside"></ul>
             </div>
+            <p class="deck-count" aria-live="polite"></p>
             <p class="deck-hint">
               tap the photo · swipe<span class="hint-keys"> · ← → keys</span> ·
               hold for color
             </p>
           </div>
-          <div
-            class="deck"
-            role="group"
-            aria-roledescription="photo deck"
-            aria-label="Photos from outside the IDE. Press Enter or the arrow keys for the next photo."
-            tabindex="0"
-          ></div>
         </div>
       </section>
 

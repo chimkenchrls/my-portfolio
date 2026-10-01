@@ -21,7 +21,7 @@ Globals: `assets/data.js` defines exactly one global, `PORTFOLIO_DATA`. `script.
 
 ## 3. Directory Layout
 ```text
-my-portfolio/
+portfolio/
 ├── AGENTS.md
 ├── README.md
 ├── index.html              static shell; hero/bio hard-coded, lists rendered from data
