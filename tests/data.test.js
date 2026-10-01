@@ -72,7 +72,7 @@ test('outside-the-IDE photos have files on disk, no per-photo captions, one sect
     assert.ok(fs.existsSync(path.join(ROOT, item.photo)), `${item.photo} missing`);
     assert.ok(!('caption' in item), 'captions were dropped');
   }
-  assert.equal(data.outsideIntro, 'Life away from the terminal — the places, people, and little moments that recharge me between builds.');
+  assert.equal(data.outsideIntro, 'Life away from the terminal. The places, things, and little moments that recharge me between builds.');
 });
 
 test('validateData rejects bad outside entries', () => {

@@ -93,7 +93,6 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 ul, ol { list-style: none; margin: 0; padding: 0; }
 h1, h2, h3, p, dl, dd { margin: 0; }
-kbd { font: inherit; }
 
 :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 ::selection { background: var(--fg); color: var(--bg); }
@@ -125,20 +124,6 @@ kbd { font: inherit; }
   transition: transform var(--t-fast) ease;
 }
 .skip-link:focus { transform: translateY(0); }
-
-.kbd {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  line-height: 1.8;
-  color: var(--fg-muted);
-  white-space: nowrap;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-}
 
 .meta-label {
   font-family: var(--font-mono);
@@ -182,6 +167,7 @@ kbd { font: inherit; }
 .icon-stack { --icon: url("./assets/icons/stack.svg"); }
 .icon-projects { --icon: url("./assets/icons/projects.svg"); }
 .icon-certifications { --icon: url("./assets/icons/certifications.svg"); }
+.icon-contact { --icon: url("./assets/icons/contact.svg"); }
 .icon-chimken { --icon: url("./assets/icons/chimken.svg"); }
 .icon-copy { --icon: url("./assets/icons/copy.svg"); }
 .icon-sun { --icon: url("./assets/icons/sun.svg"); }
@@ -256,8 +242,6 @@ kbd { font: inherit; }
 .game-trigger:hover { color: var(--fg); background: var(--bg-alt); }
 .nav-link.is-active { color: var(--fg); background: var(--bg-alt); border-color: var(--border); }
 .game-trigger { margin-top: 10px; border-color: var(--border); border-style: dashed; }
-.nav-link .kbd,
-.game-trigger .kbd { margin-left: auto; }
 
 .nav-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -317,7 +301,7 @@ kbd { font: inherit; }
 /* 8. Rail mode (tablet, or desktop collapsed) — body.is-rail set by JS ===== */
 body.is-rail .sidebar { width: var(--rail-w); padding: 20px 10px; align-items: center; }
 body.is-rail .main { margin-left: var(--rail-w); }
-body.is-rail :is(.nav-label, .nav-text, .theme-label, .visitors, .sidebar .kbd) { display: none; }
+body.is-rail :is(.nav-label, .nav-text, .theme-label, .visitors) { display: none; }
 body.is-rail .brand-mark { display: block; }
 body.is-rail .brand-name { display: none; }
 body.is-rail :is(.nav-link, .game-trigger, .copy-email, .status) { justify-content: center; padding: 10px; }
@@ -614,6 +598,9 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 @media (hover: none) { .hint-keys { display: none; } }
 .deck {
   position: relative;
+  /* Own stacking context: the cards' z-indexes (up to 100) stay inside the
+     deck and can't draw over the drawer, top bar, or dialogs. */
+  isolation: isolate;
   width: 100%;
   aspect-ratio: 4 / 5;
   margin-bottom: 20px;
@@ -657,6 +644,95 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .deck-card img,
   .deck-card video { transition: none; }
 }
+
+/* Get in touch — an inverted terminal (black on the light theme, white on dark) */
+.terminal {
+  --t-bg: var(--fg);
+  --t-fg: var(--bg);
+  --t-muted: color-mix(in srgb, var(--bg) 62%, var(--fg));
+  --t-line: color-mix(in srgb, var(--bg) 18%, var(--fg));
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--t-fg);
+  background: var(--t-bg);
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+.terminal ::selection { color: var(--t-bg); background: var(--t-fg); }
+.terminal :focus-visible { outline-color: var(--t-fg); }
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--t-muted);
+  border-bottom: 1px solid var(--t-line);
+}
+.terminal-dots { display: flex; gap: 6px; }
+.terminal-dots span { width: 9px; height: 9px; border: 1px solid var(--t-muted); border-radius: 50%; }
+.terminal-screen { height: 300px; padding: 14px 16px 4px; overflow-y: auto; overscroll-behavior: contain; }
+.terminal-screen:focus-visible { outline: 1px solid var(--t-muted); outline-offset: -4px; }
+.terminal-line { display: flex; gap: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal-line.is-cmd { margin-top: 8px; font-weight: 600; }
+.terminal-line.is-cmd:first-child { margin-top: 0; }
+.terminal-line.is-muted,
+.terminal-label { color: var(--t-muted); }
+.terminal-line.is-error::before { content: "!"; color: var(--t-muted); }
+.terminal-label { flex: 0 0 min(14ch, 36%); }
+/* neofetch: one block of pixel art beside its facts (stacked on phones) */
+.terminal-art { display: flex; align-items: center; gap: 20px; margin: 8px 0 4px; }
+.terminal-art-pic { flex-shrink: 0; margin: 0; font: inherit; line-height: 1.1; white-space: pre; }
+.terminal-art-info { min-width: 0; }
+.terminal-link {
+  color: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--t-muted);
+  text-underline-offset: 3px;
+}
+.terminal-link:hover { text-decoration-color: var(--t-fg); }
+.terminal-form { display: flex; align-items: center; gap: 10px; padding: 6px 16px 14px; }
+.terminal-prompt { color: var(--t-muted); }
+.terminal-form:focus-within .terminal-prompt { color: var(--t-fg); }
+.terminal-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  font: inherit;
+  color: inherit;
+  caret-color: var(--t-fg);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  outline: none;
+}
+.terminal-input:focus-visible { border-bottom-color: var(--t-line); }
+.terminal-input::placeholder { color: var(--t-muted); opacity: 0.7; }
+.terminal-run {
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--t-muted);
+  border: 1px solid var(--t-line);
+  border-radius: 4px;
+}
+.terminal-run:hover { color: var(--t-fg); border-color: var(--t-muted); }
+.terminal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.terminal-chip {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: border-color var(--t-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.terminal-chip::before { content: "$ "; color: var(--fg-muted); }
+.terminal-chip:hover { border-color: var(--fg); }
 
 /* 16. Pending ("coming soon") states ====================================== */
 .pending {
@@ -908,6 +984,9 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .section { padding-bottom: 48px; scroll-margin-top: calc(var(--topbar-h) + 16px); }
   .hero-photo { width: 224px; }
   .stack-grid { grid-template-columns: 1fr; }
+  .terminal-screen { height: 260px; }
+  .terminal-art { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .terminal-input { font-size: 16px; } /* iOS zooms inputs under 16px */
   .github-month:nth-child(even) { display: none; } /* every other month on phones */
   .divider-label { letter-spacing: 0.25em; }
 }

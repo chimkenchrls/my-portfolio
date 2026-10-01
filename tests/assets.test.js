@@ -27,7 +27,7 @@ test('no absolute-root paths that would break GitHub Pages subdirectory hosting'
 
 test('index.html has one section per nav target', () => {
   const html = read('index.html');
-  for (const id of ['home', 'about', 'stack', 'projects', 'certifications']) {
+  for (const id of ['home', 'about', 'stack', 'projects', 'certifications', 'contact']) {
     assert.match(html, new RegExp(`<section[^>]*id="${id}"`), `section #${id} missing`);
     assert.match(html, new RegExp(`<a[^>]*class="nav-link"[^>]*href="#${id}"`), `nav link #${id} missing`);
   }
@@ -89,4 +89,37 @@ test('"Outside the IDE" is the last section before the footer and is not in the 
   assert.doesNotMatch(html, /href="#outside"/);
   assert.match(html, /data-render="outside"/);
   assert.doesNotMatch(html, /deck-caption/, 'no per-photo caption');
+});
+
+test('photo deck is its own stacking context (cards never cover the drawer or top bar)', () => {
+  const css = read('style.css');
+  const deckRule = css.slice(css.indexOf('\n.deck {'), css.indexOf('}', css.indexOf('\n.deck {')));
+  assert.match(deckRule, /isolation:\s*isolate/);
+});
+
+test('"Get in touch" terminal is the last section, with a no-JS contact fallback', () => {
+  const html = read('index.html');
+  const contact = html.indexOf('id="contact"');
+  assert.ok(contact > html.indexOf('id="outside"') && contact < html.indexOf('<footer'));
+  assert.match(html, /Get in touch/);
+  const section = html.slice(contact, html.indexOf('<footer'));
+  assert.match(section, /class="terminal-screen"[^>]*role="log"/);
+  assert.match(section, /mailto:charleskenneth129@gmail\.com/, 'email is readable without JavaScript');
+  assert.match(section, /https:\/\/github\.com\/chimkenchrls/);
+  for (const chip of ['email', 'github', 'whoami', 'projects', 'help']) {
+    assert.match(section, new RegExp(`data-command="${chip}"`), `chip ${chip}`);
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', 'contact.svg')));
+});
+
+test('sidebar has no visible shortcut badges; keys live in hover tooltips', () => {
+  const html = read('index.html');
+  const sidebar = html.slice(html.indexOf('<aside'), html.indexOf('</aside>'));
+  assert.doesNotMatch(sidebar, /<kbd/, 'no kbd badges in the sidebar');
+  for (const [id, label, key] of [['home', 'Home', 1], ['about', 'About', 2], ['stack', 'Stack', 3], ['projects', 'Projects', 4], ['certifications', 'Certifications', 5], ['contact', 'Contact', 6]]) {
+    assert.match(sidebar, new RegExp(`data-section="${id}"\\s+title="${label} \\(${key}\\)"`), `${label} tooltip`);
+  }
+  assert.match(sidebar, /title="Play chimken \(Alt \+ K\)"/);
+  assert.match(sidebar, /title="Toggle theme \(T\)"/);
+  assert.doesNotMatch(read('style.css'), /\.kbd\b/, 'unused badge styles removed');
 });

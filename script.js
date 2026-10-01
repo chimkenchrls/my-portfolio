@@ -17,6 +17,7 @@
     { id: 'stack', label: 'Stack', key: '3' },
     { id: 'projects', label: 'Projects', key: '4' },
     { id: 'certifications', label: 'Certifications', key: '5' },
+    { id: 'contact', label: 'Contact', key: '6' },
   ];
 
   const PROJECT_STATUSES = ['done', 'in-progress', 'coming-soon'];
@@ -82,6 +83,270 @@
     const tag = String(el.tagName || '').toLowerCase();
     return tag === 'input' || tag === 'textarea' || tag === 'select';
   };
+
+  /* "Get in touch" terminal (pure). runCommand turns typed input into output
+     lines plus an optional action; the DOM module only prints and performs.
+     A line is { text, label?, href?, jump?, copy?, kind? } — always plain text. */
+  // chimken's 12x12 run frame — drawn by the game and by `neofetch`.
+  const CHIMKEN_SPRITE = [
+    '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
+    'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
+    '.XXXXXXXXX..', '..XXXXXXX...', '...X...X....', '..XX..XX....',
+  ];
+
+  // Two pixel rows become one text row of half blocks, so the art stays square.
+  const spriteToBlocks = (rows) => {
+    const out = [];
+    for (let r = 0; r < rows.length; r += 2) {
+      const top = rows[r];
+      const bottom = rows[r + 1] || '';
+      let line = '';
+      for (let c = 0; c < top.length; c += 1) {
+        const up = top[c] === 'X';
+        const down = bottom[c] === 'X';
+        line += up && down ? '█' : up ? '▀' : down ? '▄' : ' ';
+      }
+      out.push(line);
+    }
+    return out;
+  };
+
+  const TERMINAL_COMMANDS = [
+    'help', 'contact', 'email', 'github', 'linkedin', 'discord', 'whoami',
+    'projects', 'stack', 'education', 'message', 'sudo', 'chimken', 'theme', 'clear',
+    'ls', 'cd', 'cat', 'pwd', 'date', 'echo', 'history', 'neofetch',
+  ];
+
+  const TERMINAL_DIRS = [...SECTIONS.map((section) => section.id).slice(0, -1), 'outside', 'contact'];
+  const TERMINAL_FILES = ['about.txt', 'contact.txt'];
+
+  const TERMINAL_HELP = [
+    ['contact', 'every way to reach me'],
+    ['email', 'copy my email address'],
+    ['github', 'my GitHub profile'],
+    ['linkedin', 'my LinkedIn profile'],
+    ['discord', 'copy my Discord username'],
+    ['whoami', 'who I am, in four lines'],
+    ['projects', 'what I have built'],
+    ['stack', 'the tools I use'],
+    ['education', 'where I study'],
+    ['message <text>', 'email me that text'],
+    ['sudo hire-me', 'you know you want to'],
+    ['chimken', 'play the game'],
+    ['theme', 'toggle light / dark'],
+    ['clear', 'clear the screen'],
+    ['neofetch', 'me, as a system summary'],
+    ['ls', 'list the sections and files'],
+    ['cd <section>', 'go to a section'],
+    ['cat <file>', 'read about.txt or contact.txt'],
+    ['pwd', 'where you are'],
+    ['date', 'the current date'],
+    ['echo <text>', 'say it back'],
+    ['history', 'commands you ran'],
+    ['help', 'this list'],
+  ];
+
+  const mailtoLink = (email, subject, body) => {
+    const params = [];
+    if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+    if (body) params.push(`body=${encodeURIComponent(body)}`);
+    return `mailto:${email}${params.length ? `?${params.join('&')}` : ''}`;
+  };
+
+  const runCommand = (input, context) => {
+    const raw = String(input || '').trim();
+    if (!raw) return { lines: [] };
+    const [first, ...rest] = raw.split(/\s+/);
+    const command = first.toLowerCase();
+    const argText = raw.slice(first.length).trim();
+    const data = (context && context.data) || {};
+    const identity = (context && context.identity) || {};
+    const profile = data.profile || {};
+    const email = typeof profile.email === 'string' && safeUrl(`mailto:${profile.email.trim()}`) ? profile.email.trim() : null;
+    const github = safeUrl(profile.github);
+    const linkedin = safeUrl(profile.linkedin);
+    const discord = typeof profile.discord === 'string' && profile.discord.trim() ? profile.discord.trim() : null;
+    const pretty = (url) => url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '');
+    const muted = (text) => ({ text, kind: 'muted' });
+    const jumpLine = (id, text) => ({ text, jump: id });
+
+    switch (command) {
+      case 'help':
+        return { lines: TERMINAL_HELP.map(([name, about]) => ({ label: name, text: about })) };
+
+      case 'contact': {
+        const lines = [];
+        if (email) lines.push({ label: 'email', text: email, href: mailtoLink(email) });
+        if (github) lines.push({ label: 'github', text: pretty(github), href: github });
+        if (discord) lines.push({ label: 'discord', text: discord, copy: discord });
+        lines.push(linkedin
+          ? { label: 'linkedin', text: pretty(linkedin), href: linkedin }
+          : { label: 'linkedin', text: 'coming soon', kind: 'muted' });
+        if (identity.status) lines.push({ label: 'status', text: identity.status });
+        return { lines };
+      }
+
+      case 'email':
+        if (!email) return { lines: [muted('no email configured')] };
+        return {
+          lines: [{ text: email, href: mailtoLink(email) }, muted('copied — or click the address to open your mail app')],
+          action: { type: 'copy', text: email },
+        };
+
+      case 'github':
+        return { lines: [github ? { text: pretty(github), href: github } : muted('github: coming soon')] };
+
+      case 'linkedin':
+        return { lines: [linkedin ? { text: pretty(linkedin), href: linkedin } : muted('linkedin: coming soon')] };
+
+      case 'discord':
+        if (!discord) return { lines: [muted('discord: coming soon')] };
+        return { lines: [{ text: discord, copy: discord }, muted('copied to clipboard')], action: { type: 'copy', text: discord } };
+
+      case 'whoami': {
+        const current = (data.education || []).find((entry) => entry && entry.current);
+        const lines = [identity.name, identity.title, identity.location]
+          .filter((text) => typeof text === 'string' && text.trim())
+          .map((text) => ({ text }));
+        if (current) lines.push({ text: joinParts([current.degree, current.school], ' @ ') });
+        if (identity.status) lines.push(muted(identity.status));
+        return { lines: lines.length ? lines : [muted('nothing to say yet')] };
+      }
+
+      case 'projects': {
+        const lines = (data.projects || []).map((project) => ({ label: joinParts([project.title]), text: joinParts([project.meta]) }));
+        lines.push(jumpLine('projects', '→ open the projects section'));
+        return { lines };
+      }
+
+      case 'stack': {
+        const lines = (data.stack || []).map((group) => ({
+          label: joinParts([group.category]),
+          text: (group.items || []).map((item) => item && item.name).filter(Boolean).join(', '),
+        }));
+        lines.push(jumpLine('stack', '→ open the stack section'));
+        return { lines };
+      }
+
+      case 'education': {
+        const lines = (data.education || []).map((entry) => ({
+          label: joinParts([entry.dates]),
+          text: joinParts([entry.degree, entry.school], ' @ '),
+        }));
+        lines.push(jumpLine('about', '→ open the about section'));
+        return { lines };
+      }
+
+      case 'message': {
+        if (!argText) return { lines: [muted('usage: message <text>   e.g. message hi, are you free for a call?')] };
+        if (!email) return { lines: [muted('no email configured')] };
+        const href = mailtoLink(email, 'Hello from your portfolio', argText);
+        return { lines: [{ text: 'opening your mail app…', href }], action: { type: 'open', href } };
+      }
+
+      case 'sudo': {
+        if (rest.join(' ').toLowerCase() !== 'hire-me') {
+          return { lines: [{ text: 'ck is not in the sudoers file. try `sudo hire-me`', kind: 'error' }] };
+        }
+        const lines = [muted('[sudo] password for recruiter: ********'), { text: 'access granted.' }];
+        if (!email) return { lines };
+        const href = mailtoLink(email, 'OJT / Internship opportunity');
+        lines.push({ text: 'opening an email to ck…', href });
+        return { lines, action: { type: 'open', href } };
+      }
+
+      case 'ls':
+        return { lines: [{ text: TERMINAL_DIRS.map((dir) => `${dir}/`).join('  ') }, { text: TERMINAL_FILES.join('  ') }] };
+
+      case 'cd': {
+        const target = String(rest[0] || '~').toLowerCase().replace(/^\.\//, '').replace(/\/$/, '');
+        const id = target === '~' || target === '' ? 'home' : target;
+        if (!TERMINAL_DIRS.includes(id)) {
+          return { lines: [{ text: `cd: no such section: ${rest[0]} — try ls`, kind: 'error' }] };
+        }
+        return { lines: [muted(`~/${id}`)], action: { type: 'jump', id } };
+      }
+
+      case 'cat': {
+        if (!rest[0]) return { lines: [muted('usage: cat <file>   e.g. cat about.txt')] };
+        const file = rest[0].toLowerCase().replace(/\.txt$/, '');
+        if (file === 'contact') return runCommand('contact', context);
+        if (file === 'about') {
+          const bio = (identity.bio || []).filter((text) => typeof text === 'string' && text.trim());
+          return { lines: bio.length ? bio.map((text) => ({ text })) : [muted('about.txt is empty')] };
+        }
+        return { lines: [{ text: `cat: ${rest[0]}: no such file — try ls`, kind: 'error' }] };
+      }
+
+      case 'pwd':
+        return { lines: [{ text: '/home/ck/portfolio' }] };
+
+      case 'date': {
+        const now = context && context.now !== undefined ? context.now : Date.now();
+        return { lines: [{ text: new Date(now).toUTCString() }] };
+      }
+
+      case 'echo':
+        return { lines: [{ text: argText }] };
+
+      case 'history': {
+        const past = (context && context.history) || [];
+        return { lines: past.length ? past.map((entry, i) => ({ text: `${i + 1}  ${entry}` })) : [muted('no commands yet')] };
+      }
+
+      case 'neofetch': {
+        const current = (data.education || []).find((entry) => entry && entry.current);
+        const groups = data.stack || [];
+        const tools = groups.reduce((count, group) => count + ((group && group.items) || []).length, 0);
+        const game = data.game;
+        const facts = [
+          ['role', identity.title],
+          ['school', current && current.school],
+          ['location', identity.location],
+          ['stack', tools ? `${tools} tools in ${groups.length} groups` : null],
+          ['projects', (data.projects || []).length ? String(data.projects.length) : null],
+          ['chimken', game && Number.isInteger(game.highScore) ? `high score ${game.highScore}` : null],
+          ['contact', email],
+        ].filter(([, value]) => typeof value === 'string' && value.trim());
+        const info = ['ck@portfolio', '------------', ...facts.map(([key, value]) => `${key.padEnd(9)} ${value}`)];
+        const art = spriteToBlocks(CHIMKEN_SPRITE);
+        const rows = Math.max(art.length, info.length);
+        return {
+          lines: Array.from({ length: rows }, (_, i) => ({
+            label: (art[i] || '').padEnd(12),
+            text: info[i] || '',
+            kind: 'art',
+          })),
+        };
+      }
+
+      case 'chimken':
+        return { lines: [muted('launching chimken…')], action: { type: 'game' } };
+
+      case 'theme':
+        return { lines: [muted('theme toggled')], action: { type: 'theme' } };
+
+      case 'clear':
+        return { lines: [], clear: true };
+
+      default:
+        return { lines: [{ text: `command not found: ${first} — try help`, kind: 'error' }] };
+    }
+  };
+
+  // Tab completion: finishes a unique prefix, or returns the shared prefix + options.
+  const completeCommand = (partial) => {
+    const typed = String(partial || '').toLowerCase();
+    if (!typed) return { value: '', options: [] };
+    const options = TERMINAL_COMMANDS.filter((name) => name.startsWith(typed)).sort();
+    if (!options.length) return { value: typed, options };
+    let prefix = options[0];
+    options.forEach((name) => { while (!name.startsWith(prefix)) prefix = prefix.slice(0, -1); });
+    return { value: prefix, options };
+  };
+
+  // History cursor: 0 = oldest … history.length = the empty new line.
+  const historyStep = (history, index, direction) => Math.min(history.length, Math.max(0, index + direction));
 
   /* Outside-the-IDE photo deck (pure). Cards are a stacked pile: the current
      card is on top and straight, the next two peek out tilted below it. */
@@ -419,6 +684,8 @@
       chimkenView, buildSky, skyOffset, starAlpha,
       gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
       cardDepth, deckStep, cardTilt, cardStyle, gestureAction,
+      TERMINAL_COMMANDS, runCommand, completeCommand, historyStep, mailtoLink,
+      spriteToBlocks, CHIMKEN_SPRITE,
     };
   }
   if (typeof document === 'undefined') return;
@@ -886,11 +1153,7 @@
     const HI_KEY = 'chimken-hi';
     const PIXEL = 2;
     const SPRITES = {
-      runA: [
-        '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
-        'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
-        '.XXXXXXXXX..', '..XXXXXXX...', '...X...X....', '..XX..XX....',
-      ],
+      runA: CHIMKEN_SPRITE,
       runB: [
         '......X.X...', '.....XXXX...', '.....X.XXX..', '.....XXXXXXX',
         'X....XXXXX..', 'XX..XXXXXX..', 'XXXXXXXXXX..', 'XXXXXXXXXX..',
@@ -1306,7 +1569,7 @@
      ========================================================================== */
 
   const reveal = (() => {
-    const SINGLE = ['.github-panel', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
+    const SINGLE = ['.github-panel', '.terminal', '.terminal-chips', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
     const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li', '.outside-text', '.deck'];
     const STAGGER_MS = 60;
     const STAGGER_CAP = 8;
@@ -1624,6 +1887,211 @@
   })();
 
   /* ==========================================================================
+     15. Get in touch — terminal UI over the pure runCommand interpreter
+     ========================================================================== */
+
+  const terminal = (() => {
+    const init = (data) => {
+      const box = $('.terminal');
+      if (!box) return;
+      const screen = $('.terminal-screen', box);
+      const form = $('.terminal-form', box);
+      const input = $('.terminal-input', box);
+      const textOf = (selector) => {
+        const node = $(selector);
+        return node ? node.textContent.replace(/\s+/g, ' ').trim() : '';
+      };
+      const history = [];
+      const context = {
+        data: data || {},
+        history, // live reference, so `history` always sees the latest
+        identity: {
+          name: textOf('.hero-name'),
+          title: textOf('.hero-title'),
+          location: textOf('.hero-location'),
+          status: textOf('.status .nav-text'),
+          bio: $$('.about-bio p').map((node) => node.textContent.replace(/\s+/g, ' ').trim()),
+        },
+      };
+      let cursor = 0;
+      input.setAttribute('autocorrect', 'off');
+
+      // Every line is built with textContent — typed input is never parsed as HTML.
+      const lineEl = (line) => {
+        const row = el('p', `terminal-line${line.kind ? ` is-${line.kind}` : ''}`);
+        if (line.label) row.append(el('span', 'terminal-label', line.label));
+        let body;
+        if (line.href) {
+          body = el('a', 'terminal-link', line.text);
+          body.href = line.href;
+          if (!line.href.startsWith('mailto:')) { body.target = '_blank'; body.rel = 'noopener noreferrer'; }
+        } else if (line.jump) {
+          body = el('a', 'terminal-link', line.text);
+          body.href = `#${line.jump}`;
+        } else if (line.copy) {
+          body = el('button', 'terminal-link');
+          body.type = 'button';
+          body.dataset.copy = line.copy;
+          body.title = 'Copy';
+          const label = el('span', null, line.text);
+          label.setAttribute('data-copy-label', '');
+          body.append(label);
+        } else {
+          body = el('span', 'terminal-text', line.text);
+        }
+        row.append(body);
+        return row;
+      };
+
+      // `art` lines (neofetch) render as one solid picture beside its facts, so
+      // wrapping text can never pull the pixel rows apart.
+      const artEl = (group) => {
+        const block = el('div', 'terminal-art');
+        const picture = el('pre', 'terminal-art-pic', group.map((line) => line.label).join('\n').replace(/\s+$/, ''));
+        picture.setAttribute('aria-hidden', 'true');
+        const info = el('div', 'terminal-art-info');
+        group.filter((line) => line.text).forEach((line) => info.append(el('p', 'terminal-line', line.text)));
+        block.append(picture, info);
+        return block;
+      };
+
+      const print = (lines) => {
+        for (let i = 0; i < lines.length; i += 1) {
+          if (lines[i].kind === 'art') {
+            const group = [];
+            while (i < lines.length && lines[i].kind === 'art') { group.push(lines[i]); i += 1; }
+            i -= 1;
+            screen.append(artEl(group));
+          } else {
+            screen.append(lineEl(lines[i]));
+          }
+        }
+        screen.scrollTop = screen.scrollHeight;
+      };
+
+      const perform = async (action) => {
+        if (!action) return;
+        if (action.type === 'copy') {
+          try {
+            if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard API unavailable');
+            await navigator.clipboard.writeText(action.text);
+          } catch {
+            print([{ text: "couldn't copy automatically — select the text above", kind: 'error' }]);
+          }
+        } else if (action.type === 'open') {
+          window.location.href = action.href;
+        } else if (action.type === 'jump') {
+          nav.jumpTo(action.id);
+        } else if (action.type === 'game') {
+          game.open();
+        } else if (action.type === 'theme') {
+          theme.toggle();
+        }
+      };
+
+      // Intro: the first time the terminal scrolls into view, `contact` types itself.
+      const HINT = { text: 'type a command or tap one below. try `help`.', kind: 'muted' };
+      let introDone = false;
+      let introTimer = 0;
+      let run = () => {};
+
+      const finishIntro = () => {
+        if (introDone) return;
+        introDone = true;
+        window.clearTimeout(introTimer);
+        screen.removeAttribute('aria-busy');
+        screen.replaceChildren();
+        run('contact', { record: false });
+        print([HINT]);
+        screen.scrollTop = 0;
+      };
+
+      const playIntro = () => {
+        const typed = el('span', 'terminal-text', '$ ');
+        const row = el('p', 'terminal-line is-cmd');
+        row.append(typed);
+        screen.replaceChildren(row);
+        const word = 'contact';
+        let shown = 0;
+        const tick = () => {
+          if (introDone) return;
+          if (shown < word.length) {
+            shown += 1;
+            typed.textContent = `$ ${word.slice(0, shown)}`;
+            introTimer = window.setTimeout(tick, 70);
+          } else {
+            introTimer = window.setTimeout(finishIntro, 250);
+          }
+        };
+        introTimer = window.setTimeout(tick, 300);
+      };
+
+      run = (value, { record = true } = {}) => {
+        if (!introDone) finishIntro(); // a command during the intro skips ahead
+        const text = String(value).trim();
+        print([{ text: `$ ${text}`, kind: 'cmd' }]);
+        if (!text) return;
+        if (record) {
+          if (history[history.length - 1] !== text) history.push(text);
+          cursor = history.length;
+        }
+        const result = runCommand(text, context);
+        if (result.clear) screen.replaceChildren();
+        print(result.lines);
+        perform(result.action);
+      };
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        run(input.value);
+        input.value = '';
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+          event.preventDefault();
+          cursor = historyStep(history, cursor, event.key === 'ArrowUp' ? -1 : 1);
+          input.value = history[cursor] || '';
+        } else if (event.key === 'Tab' && input.value.trim() && !event.shiftKey) {
+          event.preventDefault(); // an empty prompt keeps normal Tab navigation
+          const { value, options } = completeCommand(input.value.trim());
+          input.value = value;
+          if (options.length > 1) print([{ text: options.join('   '), kind: 'muted' }]);
+        }
+      });
+
+      $$('.terminal-chip').forEach((chip) => {
+        chip.addEventListener('click', () => run(chip.dataset.command));
+      });
+
+      // Clicking the screen focuses the prompt — mouse only, so phones don't pop the keyboard.
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+      screen.addEventListener('click', (event) => {
+        if (!finePointer.matches || event.target.closest('a, button')) return;
+        if (String(window.getSelection()) !== '') return;
+        input.focus({ preventScroll: true });
+      });
+
+      const prompt = el('p', 'terminal-line is-cmd');
+      prompt.append(el('span', 'terminal-text', '$'));
+      screen.replaceChildren(prompt);
+      if (prefersReducedMotion() || !('IntersectionObserver' in window)) {
+        finishIntro();
+      } else {
+        screen.setAttribute('aria-busy', 'true'); // don't announce each typed letter
+        const observer = new IntersectionObserver((entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          observer.disconnect();
+          if (!introDone) playIntro();
+        }, { threshold: 0.35 });
+        observer.observe(box);
+      }
+    };
+
+    return { init };
+  })();
+
+  /* ==========================================================================
      99. Boot
      ========================================================================== */
 
@@ -1641,6 +2109,7 @@
     visitors.init();
     githubGraph.init(data);
     photoDeck.init(data);
+    terminal.init(data);
     const year = $('.footer-year');
     if (year) year.textContent = String(new Date().getFullYear());
   };

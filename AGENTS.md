@@ -34,7 +34,8 @@ my-portfolio/
 │   ├── logo.svg            favicon
 │   ├── fonts/              GeistPixel-Square.woff2 + OFL.txt
 │   └── icons/              UI icons; icons/stack/ brand icons
-├── tests/                  node:test suites (data, helpers, assets)
+├── tests/                  node:test suites (data, helpers, assets, chimken, deck, terminal, deploy)
+│   └── e2e/                Playwright browser checks, run locally via Docker (tests/e2e/run.sh); not in CI
 ├── .github/workflows/deploy.yml
 └── docs/superpowers/       specs and plans
 ```
@@ -54,8 +55,8 @@ Visual Style: 1px `var(--border)` dividers; gradient-line section dividers with 
 Motion (all disabled under `prefers-reduced-motion`): one-shot scroll reveal (fade + 16px slide, 60ms stagger); 8×8 pixel-tile photo reveal on hover/focus/tap; circular View Transition ripple on theme toggle.
 
 ## 5. Sections
-Sidebar: name, nav (Home, About, Stack, Projects, Certifications, keys 1–5), "Play chimken" mini game (Alt+K; also a chicken button in the mobile top bar — endless runner in a <dialog>/<canvas>, pure engine tested in tests/chimken.test.js; ck's score to beat is `game.highScore` in data.js — beating it unlocks a saved crown, pixel fireworks, and a copy-brag button), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
-Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → 06 // Outside the IDE (not in the nav: intro text beside a tap/swipe/arrow-key photo deck; photos in assets/outside/, list in data.js `outside` + `outsideIntro`; B&W, hold for color) → footer `© <year> Kenneth Charles`.
+Sidebar: name, nav (Home, About, Stack, Projects, Certifications, Contact; keys 1–6 work but are shown only in hover tooltips, no visible shortcut badges), "Play chimken" mini game (Alt+K; also a chicken button in the mobile top bar — endless runner in a <dialog>/<canvas>, pure engine tested in tests/chimken.test.js; ck's score to beat is `game.highScore` in data.js — beating it unlocks a saved crown, pixel fireworks, and a copy-brag button), status "open to OJT / internship", copyable email, visitor count (abacus API, hidden on failure), theme toggle (T), collapse.
+Main (centered column): hero (pixel photo, tagline, name, title, location, Email me, github / linkedin / discord) → About (bio, highlight chips, Experience + Education) → Stack (+ GitHub contributions dot calendar from github-contributions-api.jogruber.de, lazy-loaded, hidden on failure) → Projects → Certifications → 06 // Outside the IDE (not in the nav: intro text beside a tap/swipe/arrow-key photo deck; photos in assets/outside/, list in data.js `outside` + `outsideIntro`; B&W, hold for color) → 07 // Get in touch (in the nav as Contact: an inverted terminal that shows `contact` on load, tappable command chips, typed commands with history and Tab completion, shell aliases (ls, cd, cat, pwd, date, echo, history) and `neofetch`; `contact` types itself out on first view; pure interpreter `runCommand` tested in tests/terminal.test.js; a no-JS fallback keeps email/links readable) → footer `© <year> Kenneth Charles`.
 
 ## 6. Agent Rules of Engagement
 - Content changes go in `assets/data.js` only; use `null` for missing items (never `""`), and never invent metrics, projects, or credentials.

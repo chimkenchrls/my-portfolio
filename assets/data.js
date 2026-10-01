@@ -182,9 +182,12 @@ const PORTFOLIO_DATA = {
   // outside-1 is a Live Photo: `video` loops while it is the top card
   // (an .mp4 plus a same-named .webm for browsers without H.264).
   outsideIntro:
-    "Life away from the terminal — the places, people, and little moments that recharge me between builds.",
+    "Life away from the terminal. The places, things, and little moments that recharge me between builds.",
   outside: [
-    { photo: "./assets/outside/outside-1.jpg", video: "./assets/outside/outside-1.mp4" },
+    {
+      photo: "./assets/outside/outside-1.jpg",
+      video: "./assets/outside/outside-1.mp4",
+    },
     { photo: "./assets/outside/outside-2.jpg" },
     { photo: "./assets/outside/outside-3.jpg" },
     { photo: "./assets/outside/outside-4.jpg" },

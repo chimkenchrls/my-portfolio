@@ -8,9 +8,9 @@ const {
 const close = (actual, expected, eps = 1e-6) =>
   assert.ok(Math.abs(actual - expected) < eps, `${actual} !≈ ${expected}`);
 
-test('SECTIONS lists the five nav targets in order', () => {
+test('SECTIONS lists the six nav targets in order', () => {
   assert.deepEqual(SECTIONS.map((s) => [s.id, s.key]), [
-    ['home', '1'], ['about', '2'], ['stack', '3'], ['projects', '4'], ['certifications', '5'],
+    ['home', '1'], ['about', '2'], ['stack', '3'], ['projects', '4'], ['certifications', '5'], ['contact', '6'],
   ]);
 });
 
@@ -90,7 +90,8 @@ test('resolveShortcut maps plain keys', () => {
   assert.deepEqual(resolveShortcut(k('T')), { type: 'theme' });
   assert.equal(resolveShortcut(k('/')), null);
   assert.deepEqual(resolveShortcut(k('Escape')), { type: 'close' });
-  assert.equal(resolveShortcut(k('6')), null);
+  assert.deepEqual(resolveShortcut(k('6')), { type: 'jump', id: 'contact' });
+  assert.equal(resolveShortcut(k('7')), null);
   assert.equal(resolveShortcut(k('x')), null);
 });
 

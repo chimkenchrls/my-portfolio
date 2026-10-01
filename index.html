@@ -79,21 +79,21 @@
         <p class="nav-label">menu</p>
         <ul class="nav-list">
           <li>
-            <a class="nav-link" href="#home" data-section="home" title="Home"
+            <a class="nav-link" href="#home" data-section="home" title="Home (1)"
               ><span class="icon icon-home" aria-hidden="true"></span
-              ><span class="nav-text">Home</span><kbd class="kbd">1</kbd></a
+              ><span class="nav-text">Home</span></a
             >
           </li>
           <li>
-            <a class="nav-link" href="#about" data-section="about" title="About"
+            <a class="nav-link" href="#about" data-section="about" title="About (2)"
               ><span class="icon icon-about" aria-hidden="true"></span
-              ><span class="nav-text">About</span><kbd class="kbd">2</kbd></a
+              ><span class="nav-text">About</span></a
             >
           </li>
           <li>
-            <a class="nav-link" href="#stack" data-section="stack" title="Stack"
+            <a class="nav-link" href="#stack" data-section="stack" title="Stack (3)"
               ><span class="icon icon-stack" aria-hidden="true"></span
-              ><span class="nav-text">Stack</span><kbd class="kbd">3</kbd></a
+              ><span class="nav-text">Stack</span></a
             >
           </li>
           <li>
@@ -101,9 +101,9 @@
               class="nav-link"
               href="#projects"
               data-section="projects"
-              title="Projects"
+              title="Projects (4)"
               ><span class="icon icon-projects" aria-hidden="true"></span
-              ><span class="nav-text">Projects</span><kbd class="kbd">4</kbd></a
+              ><span class="nav-text">Projects</span></a
             >
           </li>
           <li>
@@ -111,10 +111,19 @@
               class="nav-link"
               href="#certifications"
               data-section="certifications"
-              title="Certifications"
+              title="Certifications (5)"
               ><span class="icon icon-certifications" aria-hidden="true"></span
-              ><span class="nav-text">Certifications</span
-              ><kbd class="kbd">5</kbd></a
+              ><span class="nav-text">Certifications</span></a
+            >
+          </li>
+          <li>
+            <a
+              class="nav-link"
+              href="#contact"
+              data-section="contact"
+              title="Contact (6)"
+              ><span class="icon icon-contact" aria-hidden="true"></span
+              ><span class="nav-text">Contact</span></a
             >
           </li>
         </ul>
@@ -125,8 +134,7 @@
           title="Play chimken (Alt + K)"
         >
           <span class="icon icon-chimken" aria-hidden="true"></span
-          ><span class="nav-text">Play chimken</span
-          ><kbd class="kbd">Alt + K</kbd>
+          ><span class="nav-text">Play chimken</span>
         </button>
       </nav>
 
@@ -145,8 +153,7 @@
         >
           <span class="icon icon-sm icon-copy" aria-hidden="true"></span
           ><span class="nav-text" data-copy-label
-            >charleskenneth129@gmail.com</span
-          >
+            >charleskenneth129@gmail.com</span>
         </button>
         <p class="visitors" hidden>
           <span class="meta-label">visitors</span
@@ -163,8 +170,7 @@
               class="icon icon-sm icon-sun theme-icon"
               aria-hidden="true"
             ></span
-            ><span class="theme-label">[MODE: LIGHT]</span
-            ><kbd class="kbd">T</kbd>
+            ><span class="theme-label">[MODE: LIGHT]</span>
           </button>
           <button
             class="collapse-toggle"
@@ -345,6 +351,76 @@
             <ul class="deck-cards" data-render="outside"></ul>
           </div>
         </div>
+      </section>
+
+      <section class="section" id="contact" aria-labelledby="contact-heading">
+        <div class="divider">
+          <span class="divider-line"></span>
+          <h2 class="divider-label" id="contact-heading">
+            <span class="divider-index" aria-hidden="true">07 //</span>
+            Get in touch
+          </h2>
+          <span class="divider-line"></span>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar" aria-hidden="true">
+            <span class="terminal-dots"><span></span><span></span><span></span></span>
+            <span class="terminal-title">ck@portfolio: ~</span>
+          </div>
+          <div
+            class="terminal-screen"
+            role="log"
+            aria-live="polite"
+            aria-label="Terminal output"
+            tabindex="0"
+          >
+            <p class="terminal-line is-cmd"><span class="terminal-text">$ contact</span></p>
+            <p class="terminal-line">
+              <span class="terminal-label">email</span>
+              <a class="terminal-link" href="mailto:charleskenneth129@gmail.com"
+                >charleskenneth129@gmail.com</a
+              >
+            </p>
+            <p class="terminal-line">
+              <span class="terminal-label">github</span>
+              <a
+                class="terminal-link"
+                href="https://github.com/chimkenchrls"
+                target="_blank"
+                rel="noopener noreferrer"
+                >github.com/chimkenchrls</a
+              >
+            </p>
+            <p class="terminal-line">
+              <span class="terminal-label">discord</span>
+              <span class="terminal-text">de4dicated</span>
+            </p>
+          </div>
+          <form class="terminal-form">
+            <label class="terminal-prompt" for="terminal-input"
+              ><span aria-hidden="true">$</span
+              ><span class="visually-hidden">Terminal command</span></label
+            >
+            <input
+              class="terminal-input"
+              id="terminal-input"
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              enterkeyhint="send"
+              placeholder="type a command…"
+            />
+            <button class="terminal-run" type="submit">run</button>
+          </form>
+        </div>
+        <ul class="terminal-chips">
+          <li><button class="terminal-chip" type="button" data-command="email">email</button></li>
+          <li><button class="terminal-chip" type="button" data-command="github">github</button></li>
+          <li><button class="terminal-chip" type="button" data-command="whoami">whoami</button></li>
+          <li><button class="terminal-chip" type="button" data-command="projects">projects</button></li>
+          <li><button class="terminal-chip" type="button" data-command="help">help</button></li>
+        </ul>
       </section>
 
       <footer class="footer">
