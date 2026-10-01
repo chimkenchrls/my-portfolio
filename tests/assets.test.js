@@ -113,7 +113,7 @@ test('"Get in touch" terminal is the last section, with a no-JS contact fallback
   assert.doesNotMatch(section, /\$ contact/, 'old $ prompt replaced');
   assert.match(section, /mailto:charleskenneth129@gmail\.com/, 'email is readable without JavaScript');
   assert.match(section, /https:\/\/github\.com\/chimkenchrls/);
-  for (const chip of ['email', 'github', 'whoami', 'projects', 'help']) {
+  for (const chip of ['help', 'email', 'whoami', 'projects']) {
     assert.match(section, new RegExp(`data-command="${chip}"`), `chip ${chip}`);
   }
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', 'contact.svg')));

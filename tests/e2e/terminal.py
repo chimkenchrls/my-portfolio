@@ -147,10 +147,10 @@ with sync_playwright() as pw:
     # --- phone ---------------------------------------------------------------
     ctx, p, errors = new_page(b, 375, 812, has_touch=True, is_mobile=True)
     p.evaluate("document.getElementById('contact').scrollIntoView(); 0"); p.wait_for_timeout(300)
-    p.tap('.terminal-chip[data-command="github"]'); p.wait_for_timeout(200)
+    p.tap('.terminal-chip[data-command="email"]'); p.wait_for_timeout(200)
     early = lines(p)
     idx = lambda cmd: next(i for i, l in enumerate(early) if l.endswith("❯ " + cmd))
-    check("phone: a chip tapped mid-intro finishes the intro first", EMAIL in screen(p) and idx("github") > idx("contact"), str(early))
+    check("phone: a chip tapped mid-intro finishes the intro first", EMAIL in screen(p) and idx("email") > idx("contact"), str(early))
     check("phone: prompt shortens to ~ ❯", early[0] == "~ ❯ contact" and not p.is_visible(".terminal-user"), early[0])
     check("phone: contact block visible on load", EMAIL in screen(p))
     p.fill(".terminal-input", "neofetch"); p.tap(".terminal-run"); p.wait_for_timeout(200)
