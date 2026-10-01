@@ -11,7 +11,7 @@ const PORTFOLIO_DATA = {
     email: "charleskenneth129@gmail.com",
     github: "https://github.com/chimkenchrls",
     githubUsername: "chimkenchrls",
-    linkedin: null,
+    linkedin: "https://www.linkedin.com/in/kennethcharlesvaldez",
     discord: "de4dicated",
   },
 
