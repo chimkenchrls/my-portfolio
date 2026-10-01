@@ -630,9 +630,6 @@
       if (!isOptionalText(profile.githubUsername)) errors.push('profile.githubUsername: text or null');
     }
 
-    checkList('highlights', data.highlights, (h, p) => {
-      if (!isText(h.icon) || !isText(h.label)) errors.push(`${p}: icon and label required`);
-    });
     checkList('experience', data.experience, (e, p) => {
       if (!isText(e.title) || !isText(e.org) || !isText(e.dates)) errors.push(`${p}: title, org, dates required`);
       if (!Array.isArray(e.bullets)) errors.push(`${p}.bullets: must be an array`);
@@ -724,12 +721,6 @@
     return node;
   };
 
-  const iconEl = (name, extraClass = '') => {
-    const span = el('span', `icon icon-${name}${extraClass ? ` ${extraClass}` : ''}`);
-    span.setAttribute('aria-hidden', 'true');
-    return span;
-  };
-
   const stackIconEl = (slug) => {
     const span = el('span', 'icon icon-sm');
     span.setAttribute('aria-hidden', 'true');
@@ -792,14 +783,6 @@
         return [sep, node];
       });
     };
-
-    const highlights = ({ highlights: items = [] }) => items.map(({ icon, label }) => {
-      const li = el('li', 'chip');
-      const badge = el('span', 'chip-icon');
-      badge.append(iconEl(icon, 'icon-sm'));
-      li.append(badge, el('span', null, label));
-      return li;
-    });
 
     const rowHead = (title, meta, current) => {
       const head = el('div', 'row-head');
@@ -920,7 +903,7 @@
       return li;
     });
 
-    const renderers = { social, highlights, experience, education, stack, projects, certifications, outside };
+    const renderers = { social, experience, education, stack, projects, certifications, outside };
 
     const showLoadError = (container) => {
       if (container.dataset.render === 'social') return; // static github link stays
@@ -1577,7 +1560,7 @@
      ========================================================================== */
 
   const reveal = (() => {
-    const SINGLE = ['.github-panel', '.contact-intro', '.terminal', '.terminal-chips', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
+    const SINGLE = ['.github-panel', '.contact-intro', '.terminal', '.terminal-chips', '.divider', '.about-bio', '.timeline-block', '.list-head'];
     const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li', '.outside-text', '.deck'];
     const STAGGER_MS = 60;
     const STAGGER_CAP = 8;

@@ -161,3 +161,17 @@ test('photo deck markup: cards live inside the deck; counter and hint sit below 
   const text = section.slice(section.indexOf('class="outside-text"'), section.indexOf('class="deck-column"'));
   assert.doesNotMatch(text, /deck-count|deck-hint/, 'only the description stays beside the deck');
 });
+
+test('About: no highlight chips, and the bio uses the full column width', () => {
+  const html = read('index.html');
+  const css = read('style.css');
+  const about = html.slice(html.indexOf('id="about"'), html.indexOf('id="stack"'));
+  assert.doesNotMatch(about, /class="chips"|data-render="highlights"/);
+  assert.doesNotMatch(css, /\.chips?\b|\.chip-icon|icon-book|icon-cloud|icon-briefcase/, 'chip styles and icons removed');
+  assert.doesNotMatch(read('script.js'), /highlights|chip-icon/, 'chip rendering removed');
+  for (const icon of ['book', 'cloud', 'briefcase']) {
+    assert.ok(!fs.existsSync(path.join(ROOT, 'assets', 'icons', `${icon}.svg`)), `${icon}.svg should be deleted`);
+  }
+  const bioRule = css.slice(css.indexOf('.about-bio {'), css.indexOf('}', css.indexOf('.about-bio {')));
+  assert.doesNotMatch(bioRule, /max-width/, 'bio is no longer capped at 64ch');
+});

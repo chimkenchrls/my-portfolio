@@ -18,12 +18,6 @@ const PORTFOLIO_DATA = {
   // chimken: the site owner's high score shown as the score to beat.
   game: { owner: "ck", highScore: 3236 },
 
-  highlights: [
-    { icon: "book", label: "4th-Year BS Computer Science" },
-    { icon: "cloud", label: "Aspiring DevOps Engineer" },
-    { icon: "briefcase", label: "Open to OJT / Internship" },
-  ],
-
   experience: [
     {
       title: "BS Computer Science",

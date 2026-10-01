@@ -183,9 +183,6 @@ h1, h2, h3, p, dl, dd { margin: 0; }
 .icon-sun { --icon: url("./assets/icons/sun.svg"); }
 .icon-moon { --icon: url("./assets/icons/moon.svg"); }
 .icon-pin { --icon: url("./assets/icons/pin.svg"); }
-.icon-book { --icon: url("./assets/icons/book.svg"); }
-.icon-cloud { --icon: url("./assets/icons/cloud.svg"); }
-.icon-briefcase { --icon: url("./assets/icons/briefcase.svg"); }
 
 /* 6. Layout =============================================================== */
 .topbar { display: none; }
@@ -449,28 +446,14 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 .list-head { display: flex; justify-content: space-between; gap: 16px; }
 
 /* 13. About =============================================================== */
-.about-bio { display: flex; flex-direction: column; gap: 14px; max-width: 64ch; font-size: 16px; }
-
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 40px; }
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px 5px 5px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-.chip-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  color: var(--bg);
-  background: var(--fg);
-  border-radius: 6px;
+/* The bio spans the full column; balanced wrapping keeps the long lines even. */
+.about-bio {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 40px;
+  font-size: 16px;
+  text-wrap: pretty;
 }
 
 .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }

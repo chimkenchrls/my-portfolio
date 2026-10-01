@@ -7,7 +7,7 @@ const ROOT = path.join(__dirname, '..');
 
 test('data.js exports PORTFOLIO_DATA with every section', () => {
   const data = require('../assets/data.js');
-  for (const key of ['profile', 'highlights', 'experience', 'education', 'stack', 'projects', 'certifications', 'certificationsPending']) {
+  for (const key of ['profile', 'experience', 'education', 'stack', 'projects', 'certifications', 'certificationsPending']) {
     assert.ok(key in data, `missing ${key}`);
   }
 });
@@ -38,11 +38,9 @@ test('every stack icon slug has a file on disk', () => {
   }
 });
 
-test('every highlight icon has a file on disk', () => {
+test('highlight chips were removed from the data', () => {
   const data = require('../assets/data.js');
-  for (const h of data.highlights) {
-    assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'icons', `${h.icon}.svg`)), `${h.icon}.svg missing`);
-  }
+  assert.ok(!('highlights' in data));
 });
 
 test('the real data passes validateData', () => {
