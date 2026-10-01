@@ -530,11 +530,24 @@
     maxSpeed: 720,
     acceleration: 7,
     restartDelay: 0.5,
-    bugs: {
+    // `y` is the obstacle's height above the ground (flying ones only).
+    obstacles: {
       small: { w: 14, h: 12 },
       large: { w: 18, h: 16 },
       pair: { w: 32, h: 12 },
+      swarm: { w: 50, h: 12 },
+      hawkLow: { w: 24, h: 14, y: 8 },   // at chimken height: jump over it
+      hawkHigh: { w: 24, h: 14, y: 80 }, // at the top of the jump arc: stay grounded
     },
+    // New kinds join in as the score climbs.
+    unlocks: [
+      { at: 0, kinds: ['small'] },
+      { at: 150, kinds: ['large', 'pair'] },
+      { at: 300, kinds: ['hawkLow'] },
+      { at: 500, kinds: ['hawkHigh', 'swarm'] },
+    ],
+    corn: { w: 10, h: 10, y: 92, points: 25, chance: 0.35 }, // near the top of a tap jump
+    milestoneEvery: 100,
   };
 
   const createChimkenState = (hi = 0) => ({
@@ -547,22 +560,35 @@
     nextSpawnIn: CHIMKEN.width * 0.8,
     chimken: { y: 0, vy: 0, onGround: true },
     obstacles: [],
+    bonus: 0,
+    pickups: [],
   });
 
   // Distance until the next bug: always long enough to land and jump again.
   const spawnGap = (speed, random = Math.random) => speed * (0.8 + random() * 0.9);
 
-  const spawnBug = (random) => {
-    const r = random();
-    const kind = r < 0.5 ? 'small' : r < 0.8 ? 'large' : 'pair';
-    return { x: CHIMKEN.width, ...CHIMKEN.bugs[kind], kind };
+  const obstaclePool = (score) => CHIMKEN.unlocks
+    .filter((tier) => score >= tier.at)
+    .flatMap((tier) => tier.kinds);
+
+  const spawnObstacle = (random, score) => {
+    const pool = obstaclePool(score);
+    const kind = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
+    return { x: CHIMKEN.width, kind, ...CHIMKEN.obstacles[kind] };
   };
 
-  const hitsBug = (chimken, bug) => {
+  // Box overlap with a little forgiveness; `thing.y` is its height above the ground.
+  const hitsObstacle = (chimken, thing) => {
     const left = CHIMKEN.chimkenX + 4;
     const right = left + CHIMKEN.chimkenSize - 8;
-    return left < bug.x + bug.w && right > bug.x && chimken.y < bug.h - 2;
+    const bottom = chimken.y;
+    const top = chimken.y + CHIMKEN.chimkenSize - 4;
+    const base = thing.y || 0;
+    return left < thing.x + thing.w && right > thing.x && bottom < base + thing.h - 2 && top > base + 2;
   };
+
+  const milestone = (previousScore, score) => Math.floor(score / CHIMKEN.milestoneEvery)
+    > Math.floor(previousScore / CHIMKEN.milestoneEvery);
 
   const stepChimken = (state, dt, input, random = Math.random) => {
     if (state.status === 'ready') {
@@ -592,16 +618,31 @@
     const obstacles = state.obstacles
       .map((bug) => ({ ...bug, x: bug.x - moved }))
       .filter((bug) => bug.x + bug.w > 0);
+    let pickups = (state.pickups || [])
+      .map((corn) => ({ ...corn, x: corn.x - moved }))
+      .filter((corn) => corn.x + corn.w > 0);
     let nextSpawnIn = state.nextSpawnIn - moved;
     if (nextSpawnIn <= 0) {
-      obstacles.push(spawnBug(random));
+      obstacles.push(spawnObstacle(random, state.score));
       nextSpawnIn = spawnGap(speed, random);
+      if (random() < CHIMKEN.corn.chance) {
+        // Halfway to the next obstacle, high enough that it takes a jump.
+        const { w, h, y } = CHIMKEN.corn;
+        pickups.push({ x: CHIMKEN.width + nextSpawnIn / 2, y, w, h });
+      }
+    }
+
+    let bonus = state.bonus || 0;
+    const grabbed = pickups.filter((corn) => hitsObstacle(chimken, corn));
+    if (grabbed.length) {
+      bonus += grabbed.length * CHIMKEN.corn.points;
+      pickups = pickups.filter((corn) => !grabbed.includes(corn));
     }
 
     const distance = state.distance + moved;
-    const score = Math.floor(distance / 10);
-    const next = { ...state, speed, distance, score, chimken, obstacles, nextSpawnIn };
-    if (obstacles.some((bug) => hitsBug(chimken, bug))) {
+    const score = Math.floor(distance / 10) + bonus;
+    const next = { ...state, speed, distance, score, chimken, obstacles, nextSpawnIn, bonus, pickups };
+    if (obstacles.some((bug) => hitsObstacle(chimken, bug))) {
       return { ...next, status: 'over', overFor: 0, hi: Math.max(state.hi, score) };
     }
     return next;
@@ -686,6 +727,7 @@
       parseContributions, buildContributionWeeks, dotRadius, monthLabels,
       isTypingTarget, resolveShortcut, validateData,
       CHIMKEN, createChimkenState, stepChimken, spawnGap,
+      obstaclePool, spawnObstacle, hitsObstacle, milestone,
       chimkenView, buildSky, skyOffset, starAlpha,
       gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
       cardDepth, deckStep, cardTilt, cardStyle, gestureAction,
@@ -1170,6 +1212,16 @@
         'X.......X', '.X.....X.', '..XXXXX..', '.XX.X.XX.',
         'XXXXXXXXX', 'XXX.X.XXX', '.XXXXXXX.', 'X.X.X.X.X',
       ],
+      // The hawk flies left, toward chimken: head on the left, two wing frames.
+      hawkUp: [
+        '......XX....', '.....XXXX...', '....XXXX....', '.XXXXXXXXXXX',
+        'XX.XXXXXXX..', '..XXXXXX....', '............',
+      ],
+      hawkDown: [
+        '............', '.XXXXXXXXXXX', 'XX.XXXXXXX..', '..XXXXXXX...',
+        '....XXXX....', '.....XXXX...', '......XX....',
+      ],
+      corn: ['..X..', '.XXX.', 'XXXXX', '.XXX.', '..X..'],
     };
     let state = createChimkenState();
     let input = { jump: false, holding: false };
@@ -1186,6 +1238,8 @@
     let crownedThisRun = false;
     let sparks = [];
     let flashUntil = 0;
+    let cornPopUntil = 0;
+    let milestoneTimer = 0;
     let sky = null;
     let clock = 0;
 
@@ -1285,14 +1339,19 @@
       for (let x = -offset; x < view.width; x += 12) ctx.fillRect(x, ground + 5, 2, 1);
 
       ctx.fillStyle = fg;
+      const flap = !prefersReducedMotion() && Math.floor(clock * 6) % 2 === 1;
       state.obstacles.forEach((bug) => {
-        if (bug.kind === 'pair') {
-          drawSprite(SPRITES.bugSmall, bug.x, ground);
-          drawSprite(SPRITES.bugSmall, bug.x + 18, ground);
+        const base = ground - (bug.y || 0);
+        if (bug.kind === 'pair' || bug.kind === 'swarm') {
+          const count = bug.kind === 'pair' ? 2 : 3;
+          for (let n = 0; n < count; n += 1) drawSprite(SPRITES.bugSmall, bug.x + n * 18, base);
+        } else if (bug.kind === 'hawkLow' || bug.kind === 'hawkHigh') {
+          drawSprite(flap ? SPRITES.hawkDown : SPRITES.hawkUp, bug.x, base);
         } else {
-          drawSprite(bug.kind === 'large' ? SPRITES.bugLarge : SPRITES.bugSmall, bug.x, ground);
+          drawSprite(bug.kind === 'large' ? SPRITES.bugLarge : SPRITES.bugSmall, bug.x, base);
         }
       });
+      (state.pickups || []).forEach((corn) => drawSprite(SPRITES.corn, corn.x, ground - corn.y));
 
       const { chimken } = state;
       let sprite = SPRITES.runA;
@@ -1302,6 +1361,15 @@
       if (crowned) {
         const headTop = ground - chimken.y - sprite.length * PIXEL;
         drawSprite(SPRITES.crown, CHIMKEN.chimkenX + 5 * PIXEL, headTop - 1);
+      }
+
+      if (clock < cornPopUntil) {
+        ctx.globalAlpha = Math.min(1, (cornPopUntil - clock) * 2.5);
+        ctx.font = '12px "Geist Mono", ui-monospace, monospace';
+        ctx.fillStyle = fg;
+        ctx.textAlign = 'left';
+        ctx.fillText(`+${CHIMKEN.corn.points}`, CHIMKEN.chimkenX + 28, ground - chimken.y - 20);
+        ctx.globalAlpha = 1;
       }
 
       sparks.forEach((spark) => {
@@ -1344,8 +1412,15 @@
       clock = now / 1000;
       const wasOver = state.status === 'over';
       const previousScore = state.score;
+      const previousBonus = state.bonus || 0;
       state = stepChimken(state, dt, input);
       input.jump = false;
+      if ((state.bonus || 0) > previousBonus) cornPopUntil = clock + 0.7;
+      if (state.status === 'running' && milestone(previousScore, state.score)) {
+        scoreEl.classList.add('is-milestone');
+        window.clearTimeout(milestoneTimer);
+        milestoneTimer = window.setTimeout(() => scoreEl.classList.remove('is-milestone'), 900);
+      }
       if (wasOver && state.status === 'running') { bragButton.hidden = true; crownedThisRun = false; }
       if (passedRival(previousScore, state.score, rival)) {
         sparks = sparks.concat(spawnSparks(view.width / 2, view.height * 0.3, 28));

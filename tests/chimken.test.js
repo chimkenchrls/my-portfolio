@@ -234,3 +234,123 @@ test('fireworks sparks burst outward, fall, fade, and disappear', () => {
   for (let n = 0; n < 40 && t.length; n += 1) t = stepSparks(t, 0.1);
   assert.equal(t.length, 0, 'all sparks gone within a few seconds');
 });
+
+const { obstaclePool, spawnObstacle, hitsObstacle, milestone } = require('../script.js');
+// A running game with chimken standing on the ground (started() leaves it mid-jump).
+const ground = (extra = {}) => ({ ...started(), chimken: { y: 0, vy: 0, onGround: true }, obstacles: [], pickups: [], ...extra });
+const at = (kind, x = CHIMKEN.chimkenX) => ({ x, kind, ...CHIMKEN.obstacles[kind] });
+
+test('obstacles unlock as the score climbs', () => {
+  assert.deepEqual(obstaclePool(0), ['small']);
+  assert.deepEqual(obstaclePool(149), ['small']);
+  assert.deepEqual(obstaclePool(150), ['small', 'large', 'pair']);
+  assert.deepEqual(obstaclePool(300), ['small', 'large', 'pair', 'hawkLow']);
+  assert.deepEqual(obstaclePool(500), ['small', 'large', 'pair', 'hawkLow', 'hawkHigh', 'swarm']);
+  assert.deepEqual(obstaclePool(99999), obstaclePool(500));
+});
+
+test('spawnObstacle only picks unlocked kinds and enters from the right edge', () => {
+  for (let r = 0; r < 1; r += 0.07) {
+    assert.equal(spawnObstacle(() => r, 0).kind, 'small');
+    assert.ok(obstaclePool(200).includes(spawnObstacle(() => r, 200).kind));
+  }
+  const seen = new Set();
+  for (let r = 0; r < 1; r += 0.01) seen.add(spawnObstacle(() => r, 900).kind);
+  assert.deepEqual([...seen].sort(), [...obstaclePool(900)].sort(), 'every unlocked kind can appear');
+  const hawk = spawnObstacle(() => 0.99, 300);
+  assert.equal(hawk.kind, 'hawkLow');
+  assert.equal(hawk.x, CHIMKEN.width);
+  assert.ok(hawk.y > 0 && hawk.w > 0 && hawk.h > 0);
+});
+
+test('ground obstacles: hit when running into them, cleared when above them', () => {
+  for (const kind of ['small', 'large', 'pair', 'swarm']) {
+    assert.equal(hitsObstacle({ y: 0 }, at(kind)), true, `${kind} on the ground`);
+    assert.equal(hitsObstacle({ y: 40 }, at(kind)), false, `${kind} cleared in the air`);
+    assert.equal(hitsObstacle({ y: 0 }, at(kind, CHIMKEN.chimkenX + 200)), false, `${kind} far away`);
+  }
+});
+
+test('low hawk must be jumped; high hawk is only dangerous if you jump', () => {
+  assert.equal(hitsObstacle({ y: 0 }, at('hawkLow')), true, 'running into a low hawk');
+  assert.equal(hitsObstacle({ y: 60 }, at('hawkLow')), false, 'jumping over a low hawk');
+  assert.equal(hitsObstacle({ y: 0 }, at('hawkHigh')), false, 'running under a high hawk');
+  assert.equal(hitsObstacle({ y: 75 }, at('hawkHigh')), true, 'jumping into a high hawk near the top of the arc');
+  assert.equal(hitsObstacle({ y: 30 }, at('hawkHigh')), false, 'still below it early in a jump');
+  assert.equal(hitsObstacle({ y: 130 }, at('hawkHigh')), false, 'a held jump goes clean over it');
+});
+
+test('a full tap jump collides with a high hawk overhead, staying grounded does not', () => {
+  const hawk = at('hawkHigh', CHIMKEN.chimkenX + 60);
+  const stay = run(ground({ obstacles: [hawk] }), 0.6);
+  assert.equal(stay.status, 'running');
+  let jump = stepChimken(ground({ obstacles: [hawk] }), DT, JUMP, never);
+  jump = run(jump, 0.6);
+  assert.equal(jump.status, 'over');
+});
+
+test('swarm is three bugs wide and still clearable with one well-timed tap', () => {
+  assert.equal(CHIMKEN.obstacles.swarm.w, 14 * 3 + 4 * 2);
+  let s = ground({ obstacles: [at('swarm', CHIMKEN.chimkenX + 70)] });
+  s = stepChimken(s, DT, { jump: true, holding: false }, never);
+  s = run(s, 0.7);
+  assert.equal(s.status, 'running');
+});
+
+test('corn: grabbed in the air for +25, ignored on the ground, and scrolls away', () => {
+  const corn = { x: CHIMKEN.chimkenX + 4, ...{ y: CHIMKEN.corn.y, w: CHIMKEN.corn.w, h: CHIMKEN.corn.h } };
+  const missed = stepChimken(ground({ pickups: [corn] }), DT, NONE, never);
+  assert.equal(missed.bonus, 0);
+  assert.equal(missed.pickups.length, 1);
+  const inAir = ground({ pickups: [corn], chimken: { y: CHIMKEN.corn.y - 8, vy: 0, onGround: false } });
+  const got = stepChimken(inAir, DT, NONE, never);
+  assert.equal(got.bonus, 25);
+  assert.equal(got.pickups.length, 0);
+  assert.equal(got.score, Math.floor(got.distance / 10) + 25);
+  const gone = stepChimken(ground({ pickups: [{ ...corn, x: -30 }] }), DT, NONE, never);
+  assert.equal(gone.pickups.length, 0);
+});
+
+test('corn sometimes spawns with an obstacle, between it and the next one', () => {
+  let s = { ...ground(), nextSpawnIn: 1 };
+  s = stepChimken(s, DT, NONE, () => 0);   // random 0 -> corn chance hits
+  assert.equal(s.obstacles.length, 1);
+  assert.equal(s.pickups.length, 1);
+  assert.ok(s.pickups[0].x > CHIMKEN.width, 'corn sits after the obstacle');
+  assert.ok(s.pickups[0].y > CHIMKEN.chimkenSize, 'only reachable by jumping');
+  let t = { ...ground(), nextSpawnIn: 1 };
+  t = stepChimken(t, DT, NONE, never);     // random ~1 -> no corn
+  assert.equal(t.pickups.length, 0);
+});
+
+test('a new game starts with no bonus and no pickups, and restart clears them', () => {
+  const fresh = createChimkenState();
+  assert.equal(fresh.bonus, 0);
+  assert.deepEqual(fresh.pickups, []);
+  let over = { ...ground({ bonus: 75, pickups: [{ x: 300, y: CHIMKEN.corn.y, w: 10, h: 10 }] }), status: 'over', overFor: 1 };
+  const again = stepChimken(over, DT, JUMP, never);
+  assert.equal(again.bonus, 0);
+  assert.deepEqual(again.pickups, []);
+});
+
+test('milestone fires each time the score crosses a multiple of 100', () => {
+  assert.equal(milestone(98, 99), false);
+  assert.equal(milestone(99, 100), true);
+  assert.equal(milestone(100, 101), false);
+  assert.equal(milestone(180, 205), true, 'a corn bonus can jump past the line');
+  assert.equal(milestone(0, 0), false);
+});
+
+test('corn floats near the top of a tap jump, so a normal jump can grab it', () => {
+  // Height range in which chimken overlaps the corn:
+  const low = CHIMKEN.corn.y + 2 - (CHIMKEN.chimkenSize - 4);
+  const high = CHIMKEN.corn.y + CHIMKEN.corn.h - 2;
+  let s = stepChimken(ground(), DT, { jump: true, holding: false }, never);
+  let inBand = 0;
+  for (let t = 0; t < 1 && !s.chimken.onGround; t += DT) {
+    if (s.chimken.y > low && s.chimken.y < high) inBand += DT;
+    s = stepChimken(s, DT, NONE, never);
+  }
+  assert.ok(inBand > 0.25, `a tap jump only spends ${inBand.toFixed(3)}s at corn height`);
+  assert.ok(low > 0, 'still unreachable from the ground');
+});
