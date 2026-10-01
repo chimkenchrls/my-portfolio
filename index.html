@@ -385,6 +385,11 @@
           with <code>help</code> to see everything it can do.
         </p>
         <div class="terminal">
+          <div class="terminal-bar" aria-hidden="true">
+            <span class="terminal-dots"><span></span><span></span><span></span></span>
+            <span class="terminal-title">chimkenchrls: ~</span>
+            <span class="terminal-clock"></span>
+          </div>
           <div
             class="terminal-screen"
             role="log"
@@ -393,9 +398,7 @@
             tabindex="0"
           >
             <p class="terminal-line is-cmd">
-              <span class="terminal-ps1"
-                ><span class="terminal-user">chimkenchrls </span>~ ❯</span
-              >
+              <span class="terminal-ps1">$</span>
               <span class="terminal-text">contact</span>
             </p>
             <p class="terminal-line">
@@ -421,9 +424,7 @@
           </div>
           <form class="terminal-form">
             <label class="terminal-prompt" for="terminal-input"
-              ><span class="terminal-ps1" aria-hidden="true"
-                ><span class="terminal-user">chimkenchrls </span>~ ❯</span
-              ><span class="visually-hidden">Terminal command</span></label
+              ><span class="terminal-ps1" aria-hidden="true">$</span><span class="visually-hidden">Terminal command</span></label
             >
             <input
               class="terminal-input"
@@ -437,16 +438,6 @@
             />
             <button class="terminal-run" type="submit">run</button>
           </form>
-          <div class="terminal-status" aria-hidden="true">
-            <span class="terminal-window">[0] contact*</span>
-            <span class="terminal-state"
-              ><span class="status-dot"></span
-              ><span class="terminal-state-text"
-                >Open to OJT / Internship</span
-              ></span
-            >
-            <span class="terminal-clock"></span>
-          </div>
         </div>
         <ul class="terminal-chips">
           <li>

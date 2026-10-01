@@ -146,18 +146,12 @@
     ['help', 'this list'],
   ];
 
-  const TERMINAL_PROMPT = { user: 'chimkenchrls', path: '~', symbol: '❯' };
+  const TERMINAL_PROMPT = { user: 'chimkenchrls', path: '~', symbol: '$' };
 
   // Philippine time has no DST, so UTC+8 is exact.
   const manilaClock = (ms) => {
     const local = new Date(ms + 8 * 60 * 60 * 1000);
     return `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
-  };
-
-  // tmux window name: the last command, letters/digits/dashes only.
-  const windowTitle = (input) => {
-    const first = String(input || '').trim().split(/\s+/)[0] || '';
-    return first.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 12) || 'contact';
   };
 
   const mailtoLink = (email, subject, body) => {
@@ -699,7 +693,7 @@
       gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
       cardDepth, deckStep, cardTilt, cardStyle, gestureAction,
       TERMINAL_COMMANDS, runCommand, completeCommand, historyStep, mailtoLink,
-      spriteToBlocks, CHIMKEN_SPRITE, TERMINAL_PROMPT, manilaClock, windowTitle,
+      spriteToBlocks, CHIMKEN_SPRITE, TERMINAL_PROMPT, manilaClock,
     };
   }
   if (typeof document === 'undefined') return;
@@ -1915,7 +1909,6 @@
         const node = $(selector);
         return node ? node.textContent.replace(/\s+/g, ' ').trim() : '';
       };
-      const windowLabel = $('.terminal-window', box);
       const history = [];
       const context = {
         data: data || {},
@@ -1932,11 +1925,7 @@
       input.setAttribute('autocorrect', 'off');
 
       // Every line is built with textContent — typed input is never parsed as HTML.
-      const promptEl = () => {
-        const ps1 = el('span', 'terminal-ps1');
-        ps1.append(el('span', 'terminal-user', `${TERMINAL_PROMPT.user} `), `${TERMINAL_PROMPT.path} ${TERMINAL_PROMPT.symbol}`);
-        return ps1;
-      };
+      const promptEl = () => el('span', 'terminal-ps1', TERMINAL_PROMPT.symbol);
 
       const lineEl = (line) => {
         const row = el('p', `terminal-line${line.kind ? ` is-${line.kind}` : ''}`);
@@ -2053,7 +2042,6 @@
         const text = String(value).trim();
         print([{ text, kind: 'cmd' }]);
         if (!text) return;
-        if (windowLabel) windowLabel.textContent = `[0] ${windowTitle(text)}*`;
         if (record) {
           if (history[history.length - 1] !== text) history.push(text);
           cursor = history.length;
@@ -2095,8 +2083,6 @@
         input.focus({ preventScroll: true });
       });
 
-      const stateText = $('.terminal-state-text', box);
-      if (stateText && context.identity.status) stateText.textContent = context.identity.status;
       const clock = $('.terminal-clock', box);
       if (clock) {
         const tick = () => { clock.textContent = `${manilaClock(Date.now())} PHT`; };

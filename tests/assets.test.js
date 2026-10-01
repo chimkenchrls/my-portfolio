@@ -104,13 +104,14 @@ test('"Get in touch" terminal is the last section, with a no-JS contact fallback
   assert.match(html, /Get in touch/);
   const section = html.slice(contact, html.indexOf('<footer'));
   assert.match(section, /class="terminal-screen"[^>]*role="log"/);
-  assert.doesNotMatch(section, /terminal-dots|terminal-bar/, 'tmux style has no window-dots title bar');
-  assert.match(section, /class="terminal-status"/, 'tmux status bar');
-  assert.match(section, /class="terminal-clock"/);
-  assert.match(section, /class="terminal-user">chimkenchrls </);
+  const bar = section.slice(section.indexOf('class="terminal-bar"'), section.indexOf('class="terminal-screen"'));
+  assert.match(bar, /class="terminal-dots"/, 'classic title bar with window dots');
+  assert.match(bar, /class="terminal-title">chimkenchrls: ~</);
+  assert.match(bar, /class="terminal-clock"/, 'the clock lives in the title bar');
+  assert.doesNotMatch(section, /terminal-status|terminal-window|terminal-state/, 'tmux status bar removed');
   assert.doesNotMatch(read('index.html') + read('script.js'), /ck@portfolio/);
-  assert.match(section, /❯/);
-  assert.doesNotMatch(section, /\$ contact/, 'old $ prompt replaced');
+  assert.doesNotMatch(section, /❯/, 'classic $ prompt');
+  assert.match(section, /class="terminal-ps1"[^>]*>\$</);
   assert.match(section, /mailto:charleskenneth129@gmail\.com/, 'email is readable without JavaScript');
   assert.match(section, /https:\/\/github\.com\/chimkenchrls/);
   for (const chip of ['help', 'email', 'whoami', 'projects']) {

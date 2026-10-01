@@ -681,7 +681,19 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 }
 .terminal ::selection { color: var(--t-bg); background: var(--t-fg); }
 .terminal :focus-visible { outline-color: var(--t-fg); }
-.terminal-screen { height: 300px; padding: 16px 16px 4px; overflow-y: auto; overscroll-behavior: contain; }
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--t-muted);
+  border-bottom: 1px solid var(--t-line);
+}
+.terminal-dots { display: flex; gap: 6px; }
+.terminal-dots span { width: 9px; height: 9px; border: 1px solid var(--t-muted); border-radius: 50%; }
+.terminal-clock { margin-left: auto; font-variant-numeric: tabular-nums; }
+.terminal-screen { height: 300px; padding: 14px 16px 4px; overflow-y: auto; overscroll-behavior: contain; }
 .terminal-screen:focus-visible { outline: 1px solid var(--t-muted); outline-offset: -4px; }
 .terminal-line { display: flex; gap: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .terminal-line.is-cmd { gap: 1ch; margin-top: 8px; font-weight: 600; }
@@ -729,20 +741,6 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   border-radius: 4px;
 }
 .terminal-run:hover { color: var(--t-fg); border-color: var(--t-muted); }
-/* tmux-style status bar */
-.terminal-status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11px;
-  line-height: 2.2;
-  color: var(--t-muted);
-  background: color-mix(in srgb, var(--t-fg) 10%, var(--t-bg));
-}
-.terminal-window { flex-shrink: 0; padding: 0 10px; font-weight: 600; color: var(--t-bg); background: var(--t-fg); }
-.terminal-state { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
-.terminal-state-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.terminal-clock { flex-shrink: 0; padding-right: 12px; font-variant-numeric: tabular-nums; }
 .terminal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .terminal-chip {
   padding: 6px 12px;
@@ -754,7 +752,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   transition: border-color var(--t-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
-.terminal-chip::before { content: "❯ "; color: var(--fg-muted); }
+.terminal-chip::before { content: "$ "; color: var(--fg-muted); }
 .terminal-chip:hover { border-color: var(--fg); }
 
 /* 16. Pending ("coming soon") states ====================================== */
@@ -1008,7 +1006,6 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .hero-photo { width: 224px; }
   .stack-grid { grid-template-columns: 1fr; }
   .terminal-screen { height: 260px; }
-  .terminal-user { display: none; } /* phones: prompt shortens to `~ ❯` */
   .terminal-art { flex-direction: column; align-items: flex-start; gap: 10px; }
   .terminal-input { font-size: 16px; } /* iOS zooms inputs under 16px */
   .github-month:nth-child(even) { display: none; } /* every other month on phones */

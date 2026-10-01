@@ -239,24 +239,15 @@ test('neofetch only prints facts it actually has', () => {
   assert.doesNotMatch(facts, /role|school|chimken|contact/);
 });
 
-const { manilaClock, windowTitle, TERMINAL_PROMPT } = require('../script.js');
+const { manilaClock, TERMINAL_PROMPT } = require('../script.js');
 
-test('the prompt is user@host, folder, and a chevron', () => {
-  assert.deepEqual(TERMINAL_PROMPT, { user: 'chimkenchrls', path: '~', symbol: '❯' });
+test('the prompt is a classic $, owned by chimkenchrls', () => {
+  assert.deepEqual(TERMINAL_PROMPT, { user: 'chimkenchrls', path: '~', symbol: '$' });
+  assert.equal(require('../script.js').windowTitle, undefined, 'tmux window naming was removed');
 });
 
 test('manilaClock shows Philippine time (UTC+8) as HH:MM', () => {
   assert.equal(manilaClock(Date.UTC(2026, 9, 1, 10, 0, 0)), '18:00');
   assert.equal(manilaClock(Date.UTC(2026, 9, 1, 16, 5, 0)), '00:05');
   assert.equal(manilaClock(Date.UTC(2026, 0, 1, 23, 59, 59)), '07:59');
-});
-
-test('windowTitle names the tmux window after the last command', () => {
-  assert.equal(windowTitle('contact'), 'contact');
-  assert.equal(windowTitle('  SUDO hire-me '), 'sudo');
-  assert.equal(windowTitle('message hello there'), 'message');
-  assert.equal(windowTitle('averyveryverylongcommandname'), 'averyveryver');
-  assert.equal(windowTitle('<img onerror=x>'), 'img');
-  assert.equal(windowTitle(''), 'contact');
-  assert.equal(windowTitle('!!!'), 'contact');
 });
