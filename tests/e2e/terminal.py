@@ -38,7 +38,7 @@ with sync_playwright() as pw:
     check("key 6 jumps to contact and marks it active", p.evaluate("location.hash") == "#contact" and p.get_attribute('.nav-link[aria-current]', "data-section") == "contact")
 
     out = screen(p)
-    check("contact block shown on load without typing", "$ contact" in out.replace("\n", " ") and EMAIL in out and "github.com/chimkenchrls" in out and "de4dicated" in out and "coming soon" in out, out[:200])
+    check("contact block shown on load without typing", "$ contact" in out.replace("\n", " ") and EMAIL in out and "github.com/chimkenchrls" in out and "de4dicated" in out and "linkedin.com/in/kennethcharlesvaldez" in out, out[:200])
     check("email is a real mailto link", p.get_attribute(f'.terminal-screen a[href^="mailto:"]', "href") == f"mailto:{EMAIL}")
     gh = p.locator('.terminal-screen a[href="https://github.com/chimkenchrls"]')
     check("github link opens in a new tab safely", gh.get_attribute("target") == "_blank" and "noopener" in gh.get_attribute("rel"))

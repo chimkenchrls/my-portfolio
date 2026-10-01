@@ -38,16 +38,20 @@ test('contact lists every way to reach ck with real links', () => {
   assert.equal(byLabel.github.text, 'github.com/chimkenchrls');
   assert.equal(byLabel.discord.text, 'de4dicated');
   assert.equal(byLabel.discord.copy, 'de4dicated');
-  assert.equal(byLabel.linkedin.text, 'coming soon');
-  assert.equal(byLabel.linkedin.href, undefined, 'no link while linkedin is null');
+  assert.equal(byLabel.linkedin.text, 'linkedin.com/in/kennethcharlesvaldez');
+  assert.equal(byLabel.linkedin.href, 'https://www.linkedin.com/in/kennethcharlesvaldez');
   assert.equal(byLabel.status.text, 'Open to OJT / Internship');
 });
 
-test('linkedin becomes a link once it is set in data.js', () => {
-  const withLinkedin = { ...ctx, data: { ...data, profile: { ...data.profile, linkedin: 'https://www.linkedin.com/in/someone' } } };
-  const line = run('linkedin', withLinkedin).lines[0];
-  assert.equal(line.href, 'https://www.linkedin.com/in/someone');
-  assert.equal(run('linkedin').lines[0].text, 'linkedin: coming soon');
+test('linkedin is a real link, and falls back to "coming soon" when unset', () => {
+  const line = run('linkedin').lines[0];
+  assert.equal(line.href, 'https://www.linkedin.com/in/kennethcharlesvaldez');
+  assert.equal(line.text, 'linkedin.com/in/kennethcharlesvaldez');
+  const without = { ...ctx, data: { ...data, profile: { ...data.profile, linkedin: null } } };
+  assert.equal(run('linkedin', without).lines[0].text, 'linkedin: coming soon');
+  const row = run('contact', without).lines.find((l) => l.label === 'linkedin');
+  assert.equal(row.text, 'coming soon');
+  assert.equal(row.href, undefined, 'no link while linkedin is null');
 });
 
 test('email copies the address and offers a mail link', () => {

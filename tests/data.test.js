@@ -15,7 +15,7 @@ test('data.js exports PORTFOLIO_DATA with every section', () => {
 test('content matches the approved spec', () => {
   const data = require('../assets/data.js');
   assert.equal(data.profile.email, 'charleskenneth129@gmail.com');
-  assert.equal(data.profile.linkedin, null);
+  assert.equal(data.profile.linkedin, 'https://www.linkedin.com/in/kennethcharlesvaldez');
   assert.deepEqual(data.projects.map((p) => [p.title, p.status]), [
     ['AmIgo', 'done'], ['Thready', 'in-progress'], ['Ambiancy', 'coming-soon'],
   ]);
