@@ -146,6 +146,20 @@
     ['help', 'this list'],
   ];
 
+  const TERMINAL_PROMPT = { user: 'chimkenchrls', path: '~', symbol: '❯' };
+
+  // Philippine time has no DST, so UTC+8 is exact.
+  const manilaClock = (ms) => {
+    const local = new Date(ms + 8 * 60 * 60 * 1000);
+    return `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
+  };
+
+  // tmux window name: the last command, letters/digits/dashes only.
+  const windowTitle = (input) => {
+    const first = String(input || '').trim().split(/\s+/)[0] || '';
+    return first.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 12) || 'contact';
+  };
+
   const mailtoLink = (email, subject, body) => {
     const params = [];
     if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
@@ -279,7 +293,7 @@
       }
 
       case 'pwd':
-        return { lines: [{ text: '/home/ck/portfolio' }] };
+        return { lines: [{ text: `/home/${TERMINAL_PROMPT.user}/portfolio` }] };
 
       case 'date': {
         const now = context && context.now !== undefined ? context.now : Date.now();
@@ -308,7 +322,7 @@
           ['chimken', game && Number.isInteger(game.highScore) ? `high score ${game.highScore}` : null],
           ['contact', email],
         ].filter(([, value]) => typeof value === 'string' && value.trim());
-        const info = ['ck@portfolio', '------------', ...facts.map(([key, value]) => `${key.padEnd(9)} ${value}`)];
+        const info = [TERMINAL_PROMPT.user, '------------', ...facts.map(([key, value]) => `${key.padEnd(9)} ${value}`)];
         const art = spriteToBlocks(CHIMKEN_SPRITE);
         const rows = Math.max(art.length, info.length);
         return {
@@ -685,7 +699,7 @@
       gameOverSummary, passedRival, bragText, spawnSparks, stepSparks,
       cardDepth, deckStep, cardTilt, cardStyle, gestureAction,
       TERMINAL_COMMANDS, runCommand, completeCommand, historyStep, mailtoLink,
-      spriteToBlocks, CHIMKEN_SPRITE,
+      spriteToBlocks, CHIMKEN_SPRITE, TERMINAL_PROMPT, manilaClock, windowTitle,
     };
   }
   if (typeof document === 'undefined') return;
@@ -1569,7 +1583,7 @@
      ========================================================================== */
 
   const reveal = (() => {
-    const SINGLE = ['.github-panel', '.terminal', '.terminal-chips', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
+    const SINGLE = ['.github-panel', '.contact-intro', '.terminal', '.terminal-chips', '.divider', '.about-bio', '.chips', '.timeline-block', '.list-head'];
     const STAGGERED = ['.stack-group', '.project', '#certifications .rows > li', '.outside-text', '.deck'];
     const STAGGER_MS = 60;
     const STAGGER_CAP = 8;
@@ -1901,6 +1915,7 @@
         const node = $(selector);
         return node ? node.textContent.replace(/\s+/g, ' ').trim() : '';
       };
+      const windowLabel = $('.terminal-window', box);
       const history = [];
       const context = {
         data: data || {},
@@ -1917,8 +1932,15 @@
       input.setAttribute('autocorrect', 'off');
 
       // Every line is built with textContent — typed input is never parsed as HTML.
+      const promptEl = () => {
+        const ps1 = el('span', 'terminal-ps1');
+        ps1.append(el('span', 'terminal-user', `${TERMINAL_PROMPT.user} `), `${TERMINAL_PROMPT.path} ${TERMINAL_PROMPT.symbol}`);
+        return ps1;
+      };
+
       const lineEl = (line) => {
         const row = el('p', `terminal-line${line.kind ? ` is-${line.kind}` : ''}`);
+        if (line.kind === 'cmd') row.append(promptEl());
         if (line.label) row.append(el('span', 'terminal-label', line.label));
         let body;
         if (line.href) {
@@ -2007,9 +2029,9 @@
       };
 
       const playIntro = () => {
-        const typed = el('span', 'terminal-text', '$ ');
+        const typed = el('span', 'terminal-text', '');
         const row = el('p', 'terminal-line is-cmd');
-        row.append(typed);
+        row.append(promptEl(), typed);
         screen.replaceChildren(row);
         const word = 'contact';
         let shown = 0;
@@ -2017,7 +2039,7 @@
           if (introDone) return;
           if (shown < word.length) {
             shown += 1;
-            typed.textContent = `$ ${word.slice(0, shown)}`;
+            typed.textContent = word.slice(0, shown);
             introTimer = window.setTimeout(tick, 70);
           } else {
             introTimer = window.setTimeout(finishIntro, 250);
@@ -2029,8 +2051,9 @@
       run = (value, { record = true } = {}) => {
         if (!introDone) finishIntro(); // a command during the intro skips ahead
         const text = String(value).trim();
-        print([{ text: `$ ${text}`, kind: 'cmd' }]);
+        print([{ text, kind: 'cmd' }]);
         if (!text) return;
+        if (windowLabel) windowLabel.textContent = `[0] ${windowTitle(text)}*`;
         if (record) {
           if (history[history.length - 1] !== text) history.push(text);
           cursor = history.length;
@@ -2072,8 +2095,17 @@
         input.focus({ preventScroll: true });
       });
 
+      const stateText = $('.terminal-state-text', box);
+      if (stateText && context.identity.status) stateText.textContent = context.identity.status;
+      const clock = $('.terminal-clock', box);
+      if (clock) {
+        const tick = () => { clock.textContent = `${manilaClock(Date.now())} PHT`; };
+        tick();
+        window.setInterval(tick, 20000);
+      }
+
       const prompt = el('p', 'terminal-line is-cmd');
-      prompt.append(el('span', 'terminal-text', '$'));
+      prompt.append(promptEl());
       screen.replaceChildren(prompt);
       if (prefersReducedMotion() || !('IntersectionObserver' in window)) {
         finishIntro();

@@ -72,26 +72,40 @@
     <aside class="sidebar" id="sidebar" aria-label="Sidebar">
       <a class="brand" href="#home" aria-label="Kenneth Charles Valdez — home">
         <span class="brand-mark" aria-hidden="true">KC</span>
-        <span class="brand-name" aria-hidden="true">Kenneth Charles Valdez</span>
+        <span class="brand-name" aria-hidden="true"
+          >Kenneth Charles Valdez</span
+        >
       </a>
 
       <nav class="nav" aria-label="Sections">
         <p class="nav-label">menu</p>
         <ul class="nav-list">
           <li>
-            <a class="nav-link" href="#home" data-section="home" title="Home (1)"
+            <a
+              class="nav-link"
+              href="#home"
+              data-section="home"
+              title="Home (1)"
               ><span class="icon icon-home" aria-hidden="true"></span
               ><span class="nav-text">Home</span></a
             >
           </li>
           <li>
-            <a class="nav-link" href="#about" data-section="about" title="About (2)"
+            <a
+              class="nav-link"
+              href="#about"
+              data-section="about"
+              title="About (2)"
               ><span class="icon icon-about" aria-hidden="true"></span
               ><span class="nav-text">About</span></a
             >
           </li>
           <li>
-            <a class="nav-link" href="#stack" data-section="stack" title="Stack (3)"
+            <a
+              class="nav-link"
+              href="#stack"
+              data-section="stack"
+              title="Stack (3)"
               ><span class="icon icon-stack" aria-hidden="true"></span
               ><span class="nav-text">Stack</span></a
             >
@@ -153,7 +167,8 @@
         >
           <span class="icon icon-sm icon-copy" aria-hidden="true"></span
           ><span class="nav-text" data-copy-label
-            >charleskenneth129@gmail.com</span>
+            >charleskenneth129@gmail.com</span
+          >
         </button>
         <p class="visitors" hidden>
           <span class="meta-label">visitors</span
@@ -339,7 +354,10 @@
             <div class="outside-now">
               <p class="deck-count" aria-live="polite"></p>
             </div>
-            <p class="deck-hint">tap the photo · swipe<span class="hint-keys"> · ← → keys</span> · hold for color</p>
+            <p class="deck-hint">
+              tap the photo · swipe<span class="hint-keys"> · ← → keys</span> ·
+              hold for color
+            </p>
           </div>
           <div
             class="deck"
@@ -362,11 +380,11 @@
           </h2>
           <span class="divider-line"></span>
         </div>
+        <p class="contact-intro">
+          This is a working terminal. Type a command or tap one below. Start
+          with <code>help</code> to see everything it can do.
+        </p>
         <div class="terminal">
-          <div class="terminal-bar" aria-hidden="true">
-            <span class="terminal-dots"><span></span><span></span><span></span></span>
-            <span class="terminal-title">ck@portfolio: ~</span>
-          </div>
           <div
             class="terminal-screen"
             role="log"
@@ -374,7 +392,12 @@
             aria-label="Terminal output"
             tabindex="0"
           >
-            <p class="terminal-line is-cmd"><span class="terminal-text">$ contact</span></p>
+            <p class="terminal-line is-cmd">
+              <span class="terminal-ps1"
+                ><span class="terminal-user">chimkenchrls </span>~ ❯</span
+              >
+              <span class="terminal-text">contact</span>
+            </p>
             <p class="terminal-line">
               <span class="terminal-label">email</span>
               <a class="terminal-link" href="mailto:charleskenneth129@gmail.com"
@@ -398,7 +421,8 @@
           </div>
           <form class="terminal-form">
             <label class="terminal-prompt" for="terminal-input"
-              ><span aria-hidden="true">$</span
+              ><span class="terminal-ps1" aria-hidden="true"
+                ><span class="terminal-user">chimkenchrls </span>~ ❯</span
               ><span class="visually-hidden">Terminal command</span></label
             >
             <input
@@ -413,13 +437,38 @@
             />
             <button class="terminal-run" type="submit">run</button>
           </form>
+          <div class="terminal-status" aria-hidden="true">
+            <span class="terminal-window">[0] contact*</span>
+            <span class="terminal-state"
+              ><span class="status-dot"></span
+              ><span class="terminal-state-text"
+                >Open to OJT / Internship</span
+              ></span
+            >
+            <span class="terminal-clock"></span>
+          </div>
         </div>
         <ul class="terminal-chips">
-          <li><button class="terminal-chip" type="button" data-command="email">email</button></li>
-          <li><button class="terminal-chip" type="button" data-command="github">github</button></li>
-          <li><button class="terminal-chip" type="button" data-command="whoami">whoami</button></li>
-          <li><button class="terminal-chip" type="button" data-command="projects">projects</button></li>
-          <li><button class="terminal-chip" type="button" data-command="help">help</button></li>
+          <li>
+            <button class="terminal-chip" type="button" data-command="help">
+              help
+            </button>
+          </li>
+          <li>
+            <button class="terminal-chip" type="button" data-command="email">
+              email
+            </button>
+          </li>
+          <li>
+            <button class="terminal-chip" type="button" data-command="whoami">
+              whoami
+            </button>
+          </li>
+          <li>
+            <button class="terminal-chip" type="button" data-command="projects">
+              projects
+            </button>
+          </li>
         </ul>
       </section>
 
@@ -432,7 +481,9 @@
       <div class="game-head">
         <p class="game-title" id="game-title">chimken</p>
         <p class="game-score" aria-hidden="true">00000 HI 00000</p>
-        <button class="game-close" type="button" aria-label="Close game">×</button>
+        <button class="game-close" type="button" aria-label="Close game">
+          ×
+        </button>
       </div>
       <canvas
         class="game-canvas"

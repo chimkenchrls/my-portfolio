@@ -71,7 +71,11 @@
 
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* No blue flash on tap (inherited by everything); :active below gives the feedback instead. */
+  -webkit-tap-highlight-color: transparent;
+}
 
 body {
   margin: 0;
@@ -95,6 +99,12 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 h1, h2, h3, p, dl, dd { margin: 0; }
 
 :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+/* Touch feedback that replaces the browser's tap highlight. */
+@media (hover: none) {
+  a:active,
+  button:active { opacity: 0.6; }
+}
 ::selection { background: var(--fg); color: var(--bg); }
 
 /* 4. Utilities ============================================================ */
@@ -645,7 +655,16 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .deck-card video { transition: none; }
 }
 
-/* Get in touch — an inverted terminal (black on the light theme, white on dark) */
+/* Get in touch — a short description, then an inverted terminal */
+.contact-intro { max-width: 60ch; margin-bottom: 24px; font-size: 16px; }
+.contact-intro code {
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
 .terminal {
   --t-bg: var(--fg);
   --t-fg: var(--bg);
@@ -662,21 +681,11 @@ body.is-rail .sidebar-controls { flex-direction: column; }
 }
 .terminal ::selection { color: var(--t-bg); background: var(--t-fg); }
 .terminal :focus-visible { outline-color: var(--t-fg); }
-.terminal-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  font-size: 11px;
-  color: var(--t-muted);
-  border-bottom: 1px solid var(--t-line);
-}
-.terminal-dots { display: flex; gap: 6px; }
-.terminal-dots span { width: 9px; height: 9px; border: 1px solid var(--t-muted); border-radius: 50%; }
-.terminal-screen { height: 300px; padding: 14px 16px 4px; overflow-y: auto; overscroll-behavior: contain; }
+.terminal-screen { height: 300px; padding: 16px 16px 4px; overflow-y: auto; overscroll-behavior: contain; }
 .terminal-screen:focus-visible { outline: 1px solid var(--t-muted); outline-offset: -4px; }
 .terminal-line { display: flex; gap: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.terminal-line.is-cmd { margin-top: 8px; font-weight: 600; }
+.terminal-line.is-cmd { gap: 1ch; margin-top: 8px; font-weight: 600; }
+.terminal-ps1 { flex-shrink: 0; font-weight: 400; color: var(--t-muted); white-space: pre; }
 .terminal-line.is-cmd:first-child { margin-top: 0; }
 .terminal-line.is-muted,
 .terminal-label { color: var(--t-muted); }
@@ -694,9 +703,9 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   text-underline-offset: 3px;
 }
 .terminal-link:hover { text-decoration-color: var(--t-fg); }
-.terminal-form { display: flex; align-items: center; gap: 10px; padding: 6px 16px 14px; }
-.terminal-prompt { color: var(--t-muted); }
-.terminal-form:focus-within .terminal-prompt { color: var(--t-fg); }
+.terminal-form { display: flex; align-items: center; gap: 1ch; padding: 6px 16px 12px; }
+.terminal-prompt { display: flex; }
+.terminal-form:focus-within .terminal-ps1 { color: var(--t-fg); }
 .terminal-input {
   flex: 1;
   min-width: 0;
@@ -720,6 +729,20 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   border-radius: 4px;
 }
 .terminal-run:hover { color: var(--t-fg); border-color: var(--t-muted); }
+/* tmux-style status bar */
+.terminal-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  line-height: 2.2;
+  color: var(--t-muted);
+  background: color-mix(in srgb, var(--t-fg) 10%, var(--t-bg));
+}
+.terminal-window { flex-shrink: 0; padding: 0 10px; font-weight: 600; color: var(--t-bg); background: var(--t-fg); }
+.terminal-state { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; }
+.terminal-state-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terminal-clock { flex-shrink: 0; padding-right: 12px; font-variant-numeric: tabular-nums; }
 .terminal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .terminal-chip {
   padding: 6px 12px;
@@ -731,7 +754,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   transition: border-color var(--t-fast) ease;
   -webkit-tap-highlight-color: transparent;
 }
-.terminal-chip::before { content: "$ "; color: var(--fg-muted); }
+.terminal-chip::before { content: "❯ "; color: var(--fg-muted); }
 .terminal-chip:hover { border-color: var(--fg); }
 
 /* 16. Pending ("coming soon") states ====================================== */
@@ -985,6 +1008,7 @@ body.is-rail .sidebar-controls { flex-direction: column; }
   .hero-photo { width: 224px; }
   .stack-grid { grid-template-columns: 1fr; }
   .terminal-screen { height: 260px; }
+  .terminal-user { display: none; } /* phones: prompt shortens to `~ ❯` */
   .terminal-art { flex-direction: column; align-items: flex-start; gap: 10px; }
   .terminal-input { font-size: 16px; } /* iOS zooms inputs under 16px */
   .github-month:nth-child(even) { display: none; } /* every other month on phones */

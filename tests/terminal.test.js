@@ -196,7 +196,7 @@ test('cat prints the bio or the contact block', () => {
 });
 
 test('pwd, date, echo, and history behave like a shell', () => {
-  assert.deepEqual(texts(run('pwd')), ['/home/ck/portfolio']);
+  assert.deepEqual(texts(run('pwd')), ['/home/chimkenchrls/portfolio']);
   assert.deepEqual(texts(run('date')), ['Thu, 01 Oct 2026 10:00:00 GMT']);
   assert.deepEqual(texts(run('echo Hello   World')), ['Hello   World']);
   assert.deepEqual(texts(run('echo')), ['']);
@@ -220,7 +220,8 @@ test('neofetch shows the chimken art beside real facts from data.js', () => {
   assert.ok(lines.every((l) => l.kind === 'art' && typeof l.label === 'string' && l.label.length === 12), 'art column is 12 chars wide');
   assert.ok(lines.slice(0, 6).every((l) => /[█▀▄]/.test(l.label)), 'six rows of pixel art');
   const info = lines.map((l) => l.text).join('\n');
-  assert.match(info, /ck@portfolio/);
+  assert.match(info, /^chimkenchrls\n------------\n/);
+  assert.doesNotMatch(info, /ck@portfolio/);
   assert.match(info, /role\s+Aspiring DevOps Engineer \| Cloud Engineer/);
   assert.match(info, /school\s+STI College Lucena/);
   assert.match(info, /location\s+Sariaya, Quezon, Philippines/);
@@ -234,5 +235,28 @@ test('neofetch only prints facts it actually has', () => {
   const { lines } = runCommand('neofetch', { data: { profile: {} }, identity: {} });
   const info = lines.map((l) => l.text).join('\n');
   assert.doesNotMatch(info, /undefined|null|NaN/);
-  assert.doesNotMatch(info, /role|school|chimken|contact/);
+  const facts = lines.map((l) => l.text).slice(2).join('\n'); // below the name + rule
+  assert.doesNotMatch(facts, /role|school|chimken|contact/);
+});
+
+const { manilaClock, windowTitle, TERMINAL_PROMPT } = require('../script.js');
+
+test('the prompt is user@host, folder, and a chevron', () => {
+  assert.deepEqual(TERMINAL_PROMPT, { user: 'chimkenchrls', path: '~', symbol: '❯' });
+});
+
+test('manilaClock shows Philippine time (UTC+8) as HH:MM', () => {
+  assert.equal(manilaClock(Date.UTC(2026, 9, 1, 10, 0, 0)), '18:00');
+  assert.equal(manilaClock(Date.UTC(2026, 9, 1, 16, 5, 0)), '00:05');
+  assert.equal(manilaClock(Date.UTC(2026, 0, 1, 23, 59, 59)), '07:59');
+});
+
+test('windowTitle names the tmux window after the last command', () => {
+  assert.equal(windowTitle('contact'), 'contact');
+  assert.equal(windowTitle('  SUDO hire-me '), 'sudo');
+  assert.equal(windowTitle('message hello there'), 'message');
+  assert.equal(windowTitle('averyveryverylongcommandname'), 'averyveryver');
+  assert.equal(windowTitle('<img onerror=x>'), 'img');
+  assert.equal(windowTitle(''), 'contact');
+  assert.equal(windowTitle('!!!'), 'contact');
 });

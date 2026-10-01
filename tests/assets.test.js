@@ -104,6 +104,13 @@ test('"Get in touch" terminal is the last section, with a no-JS contact fallback
   assert.match(html, /Get in touch/);
   const section = html.slice(contact, html.indexOf('<footer'));
   assert.match(section, /class="terminal-screen"[^>]*role="log"/);
+  assert.doesNotMatch(section, /terminal-dots|terminal-bar/, 'tmux style has no window-dots title bar');
+  assert.match(section, /class="terminal-status"/, 'tmux status bar');
+  assert.match(section, /class="terminal-clock"/);
+  assert.match(section, /class="terminal-user">chimkenchrls </);
+  assert.doesNotMatch(read('index.html') + read('script.js'), /ck@portfolio/);
+  assert.match(section, /❯/);
+  assert.doesNotMatch(section, /\$ contact/, 'old $ prompt replaced');
   assert.match(section, /mailto:charleskenneth129@gmail\.com/, 'email is readable without JavaScript');
   assert.match(section, /https:\/\/github\.com\/chimkenchrls/);
   for (const chip of ['email', 'github', 'whoami', 'projects', 'help']) {
@@ -122,4 +129,21 @@ test('sidebar has no visible shortcut badges; keys live in hover tooltips', () =
   assert.match(sidebar, /title="Play chimken \(Alt \+ K\)"/);
   assert.match(sidebar, /title="Toggle theme \(T\)"/);
   assert.doesNotMatch(read('style.css'), /\.kbd\b/, 'unused badge styles removed');
+});
+
+test('"Get in touch" has a short description above the terminal', () => {
+  const html = read('index.html');
+  const section = html.slice(html.indexOf('id="contact"'), html.indexOf('<footer'));
+  const intro = section.indexOf('class="contact-intro"');
+  assert.ok(intro > -1, 'description exists');
+  assert.ok(intro < section.indexOf('class="terminal"'), 'it comes before the terminal');
+  assert.match(section, /This is a working terminal\./);
+  assert.doesNotMatch(section.slice(intro, section.indexOf('class="terminal"')), /OJT/, 'the description is about the terminal only');
+});
+
+test('mobile tap highlight is disabled site-wide, with a pressed state instead', () => {
+  const css = read('style.css');
+  const htmlRule = css.slice(css.indexOf('\nhtml {'), css.indexOf('}', css.indexOf('\nhtml {')));
+  assert.match(htmlRule, /-webkit-tap-highlight-color:\s*transparent/);
+  assert.match(css, /@media \(hover: none\)[\s\S]*?:active/);
 });
